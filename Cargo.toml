@@ -1,0 +1,21 @@
+[package]
+name = "story_lib"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+
+dioxus = { version = "0.5", features = ["web"] }
+
+# Debug
+tracing = "0.1.40"
+dioxus-logger = "0.5.0"
+gloo-timers = { version = "0.3.0", features = ["futures"] }
+getrandom = { version = "0.2.15", features = ["js"] }
+rand = { version = "0.8.5" }
+kira = "0.9.3"
+# web-sys = { version = "0.3.69", features = ["AudioContext", "AudioBuffer", "AudioBufferSourceNode", "AudioDestinationNode", "BaseAudioContext", "AudioContextState"] }
+# rubato = "0.15.0"
