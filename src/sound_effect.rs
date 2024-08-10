@@ -2,17 +2,16 @@ use std::{error::Error, io::Cursor};
 
 use dioxus::signals::{GlobalSignal, Signal};
 use kira::{
-    manager::{AudioManager, AudioManagerSettings, Capacities, DefaultBackend},
+    manager::{AudioManager, AudioManagerSettings, DefaultBackend},
     sound::static_sound::StaticSoundData,
 };
 use tracing::info;
-const CAPS: u16 = 16;
 pub static AUDIO_MANAGER: GlobalSignal<AudioManager> = Signal::global(|| {
-    let mut settings = AudioManagerSettings::default();
-    let mut capercities = Capacities::default();
-    capercities.sound_capacity = CAPS;
+    let settings = AudioManagerSettings::default();
+    // let mut capercities = Capacities::default();
+    // capercities.sound_capacity = CAPS;
 
-    settings.capacities = capercities;
+    // settings.capacities = capercities;
     let manager: AudioManager<DefaultBackend> = AudioManager::new(settings).unwrap();
     manager
 });
@@ -107,19 +106,6 @@ impl SoundEffect {
         // })?;
 
         info!("{}", AUDIO_MANAGER.write().num_sounds());
-        let num_sound = AUDIO_MANAGER.write().num_sounds();
-        let num_cap = AUDIO_MANAGER.write().sound_capacity() - 1;
-        if num_sound >= num_cap {
-            *AUDIO_MANAGER.write() = {
-                let mut settings = AudioManagerSettings::default();
-                let mut capercities = Capacities::default();
-                capercities.sound_capacity = CAPS;
-
-                settings.capacities = capercities;
-                let manager: AudioManager<DefaultBackend> = AudioManager::new(settings).unwrap();
-                manager
-            };
-        }
         (*AUDIO_MANAGER.write()).play(sound)?;
 
         Ok(())

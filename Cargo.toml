@@ -16,6 +16,6 @@ dioxus-logger = "0.5.0"
 gloo-timers = { version = "0.3.0", features = ["futures"] }
 getrandom = { version = "0.2.15", features = ["js"] }
 rand = { version = "0.8.5" }
-kira = "0.9.3"
+kira = "0.9.4"
 # web-sys = { version = "0.3.69", features = ["AudioContext", "AudioBuffer", "AudioBufferSourceNode", "AudioDestinationNode", "BaseAudioContext", "AudioContextState"] }
 # rubato = "0.15.0"
