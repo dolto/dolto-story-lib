@@ -247,9 +247,10 @@ impl TextPrint {
         while let Some(s) = s.pop_front() {
             let mut s = s.split("}}");
             let mut option = s.next().unwrap().split(",");
-            let mut message = s.next().unwrap();
+            let message = s.next().unwrap();
 
             let mut temp = TextPrint::default();
+            temp = temp.msg(message);
 
             while let Some(op) = option.next() {
                 let mut c_v = op.split(":");
@@ -311,16 +312,16 @@ impl TextPrint {
                         let mut v = value.split("(");
                         let command = v.next().unwrap();
                         let value = v.next().unwrap().split(")").next().unwrap().trim();
-                        temp = temp.style(match value {
+                        temp = temp.style(match command {
                             "min_max4" => {
                                 let mut min_max =
                                     value.split(",").flat_map(|i| i.trim().parse::<f32>());
-                                let min = min_max.next().unwrap()..min_max.next().unwrap();
-                                let max = min_max.next().unwrap()..min_max.next().unwrap();
-                                let res: Rc<dyn Fn() -> String> = Rc::new(|| {
+                                let min = (min_max.next().unwrap(), min_max.next().unwrap());
+                                let max = (min_max.next().unwrap(), min_max.next().unwrap());
+                                let res: Rc<dyn Fn() -> String> = Rc::new(move || {
                                     let mut rng = thread_rng();
-                                    let min = rng.gen_range(min.clone());
-                                    let max = rng.gen_range(max.clone());
+                                    let min = rng.gen_range(min.0..min.1);
+                                    let max = rng.gen_range(max.0..max.1);
                                     format!("--min:{:4};--max:{:4}", min, max)
                                 });
                                 res
@@ -331,7 +332,7 @@ impl TextPrint {
                                 let min = min_max.next().unwrap();
                                 let max = min_max.next().unwrap();
                                 let res: Rc<dyn Fn() -> String> =
-                                    Rc::new(|| format!("--min:{:4};--max:{:4}", min, max));
+                                    Rc::new(move || format!("--min:{:4};--max:{:4}", min, max));
                                 res
                             }
                             _ => {
@@ -344,18 +345,28 @@ impl TextPrint {
                     "sound" => {
                         let mut v = value.split("(");
                         let command = v.next().unwrap();
-                        let value = v.next().unwrap().split(")").next().unwrap().trim();
+                        let value = v
+                            .next()
+                            .unwrap()
+                            .split(")")
+                            .next()
+                            .unwrap()
+                            .trim()
+                            .to_string();
                         match command {
                             "animal_crossing" => {
-                                let animal_crossing: Rc<dyn Fn() -> SoundEffect> = Rc::new(|| {
-                                    let mut rng = thread_rng();
-                                    SoundEffect::new(SOUND_EFFECTS().get(value).unwrap().clone())
+                                let animal_crossing: Rc<dyn Fn() -> SoundEffect> =
+                                    Rc::new(move || {
+                                        let mut rng = thread_rng();
+                                        SoundEffect::new(
+                                            SOUND_EFFECTS().get(value.as_str()).unwrap().clone(),
+                                        )
                                         .unwrap()
                                         .speed(rng.gen_range(1.0..3.))
                                         .volum(2.)
                                         .reverb(0.5)
                                         .is_rev(true)
-                                });
+                                    });
                                 temp = temp.sound(Rc::clone(&animal_crossing));
                             }
                             _ => {}
@@ -368,6 +379,7 @@ impl TextPrint {
                         let v = if value.trim() == "true" { true } else { false };
                         temp = temp.is_split(v);
                     }
+                    _ => {}
                 }
             }
             result.push(temp);
