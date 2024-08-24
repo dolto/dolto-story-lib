@@ -1,14 +1,16 @@
 use std::{
+    collections::VecDeque,
     fmt::{Debug, Display},
     rc::Rc,
 };
 
 use dioxus::prelude::*;
 use gloo_timers::future::TimeoutFuture;
+use rand::{thread_rng, Rng};
 use tracing::info;
 // use web_sys::{AudioContext, AudioContextState};
 
-use crate::sound_effect::SoundEffect;
+use crate::sound_effect::{SoundEffect, SOUND_EFFECTS};
 
 pub static GAMESTATE: GlobalSignal<Element> = Signal::global(|| None);
 pub static LOG: GlobalSignal<Vec<Vec<TextPrint>>> = Signal::global(|| vec![]);
@@ -235,6 +237,142 @@ impl TextPrint {
         let mut self_temp = self.clone();
         self_temp.msg = msg;
         TextPrint::global_print(&self_temp)
+    }
+
+    pub fn parse(s: String) -> Vec<TextPrint> {
+        let mut s: VecDeque<&str> = s.split("{{").skip(1).collect();
+        let capacity = s.len();
+        let mut result = Vec::with_capacity(capacity);
+
+        while let Some(s) = s.pop_front() {
+            let mut s = s.split("}}");
+            let mut option = s.next().unwrap().split(",");
+            let mut message = s.next().unwrap();
+
+            let mut temp = TextPrint::default();
+
+            while let Some(op) = option.next() {
+                let mut c_v = op.split(":");
+                let command = c_v.next().unwrap().trim();
+                let value = c_v.next().unwrap().trim();
+
+                match command {
+                    "color" => {
+                        temp = temp.color(value);
+                    }
+                    "font" => {
+                        temp = temp.font(value);
+                    }
+                    "font_weight" => {
+                        temp = temp.font_weight(match value {
+                            "normal" => FontWeight::Normal,
+                            "bold" => FontWeight::Bold,
+                            v => {
+                                let v = v
+                                    .split("(")
+                                    .skip(1)
+                                    .next()
+                                    .unwrap()
+                                    .split(")")
+                                    .next()
+                                    .unwrap()
+                                    .parse::<u32>()
+                                    .unwrap_or(10);
+                                FontWeight::Num(v)
+                            }
+                        })
+                    }
+                    "option" => {
+                        temp = temp.option(match value {
+                            "normal" => TextOption::Normal,
+                            "italic" => TextOption::Italic,
+                            v => {
+                                let v = v
+                                    .split("(")
+                                    .skip(1)
+                                    .next()
+                                    .unwrap()
+                                    .split(")")
+                                    .next()
+                                    .unwrap()
+                                    .parse::<u32>()
+                                    .unwrap_or(10);
+                                TextOption::Oblique(v)
+                            }
+                        })
+                    }
+                    "speed" => {
+                        temp = temp.speed(value.parse::<u32>().unwrap_or(10));
+                    }
+                    "size" => {
+                        temp = temp.size(value.parse::<f32>().unwrap_or(1.));
+                    }
+                    "style" => {
+                        let mut v = value.split("(");
+                        let command = v.next().unwrap();
+                        let value = v.next().unwrap().split(")").next().unwrap().trim();
+                        temp = temp.style(match value {
+                            "min_max4" => {
+                                let mut min_max =
+                                    value.split(",").flat_map(|i| i.trim().parse::<f32>());
+                                let min = min_max.next().unwrap()..min_max.next().unwrap();
+                                let max = min_max.next().unwrap()..min_max.next().unwrap();
+                                let res: Rc<dyn Fn() -> String> = Rc::new(|| {
+                                    let mut rng = thread_rng();
+                                    let min = rng.gen_range(min.clone());
+                                    let max = rng.gen_range(max.clone());
+                                    format!("--min:{:4};--max:{:4}", min, max)
+                                });
+                                res
+                            }
+                            "min_max2" => {
+                                let mut min_max =
+                                    value.split(",").flat_map(|i| i.trim().parse::<f32>());
+                                let min = min_max.next().unwrap();
+                                let max = min_max.next().unwrap();
+                                let res: Rc<dyn Fn() -> String> =
+                                    Rc::new(|| format!("--min:{:4};--max:{:4}", min, max));
+                                res
+                            }
+                            _ => {
+                                let res: Rc<dyn Fn() -> String> =
+                                    Rc::new(|| format!("--min:1;--max:1"));
+                                res
+                            }
+                        });
+                    }
+                    "sound" => {
+                        let mut v = value.split("(");
+                        let command = v.next().unwrap();
+                        let value = v.next().unwrap().split(")").next().unwrap().trim();
+                        match command {
+                            "animal_crossing" => {
+                                let animal_crossing: Rc<dyn Fn() -> SoundEffect> = Rc::new(|| {
+                                    let mut rng = thread_rng();
+                                    SoundEffect::new(SOUND_EFFECTS().get(value).unwrap().clone())
+                                        .unwrap()
+                                        .speed(rng.gen_range(1.0..3.))
+                                        .volum(2.)
+                                        .reverb(0.5)
+                                        .is_rev(true)
+                                });
+                                temp = temp.sound(Rc::clone(&animal_crossing));
+                            }
+                            _ => {}
+                        }
+                    }
+                    "class" => {
+                        temp = temp.class(value);
+                    }
+                    "is_split" => {
+                        let v = if value.trim() == "true" { true } else { false };
+                        temp = temp.is_split(v);
+                    }
+                }
+            }
+            result.push(temp);
+        }
+        result
     }
 }
 

@@ -1,4 +1,4 @@
-use std::{error::Error, io::Cursor};
+use std::{collections::HashMap, error::Error, io::Cursor};
 
 use dioxus::signals::{GlobalSignal, Signal};
 use kira::{
@@ -15,6 +15,8 @@ pub static AUDIO_MANAGER: GlobalSignal<AudioManager> = Signal::global(|| {
     let manager: AudioManager<DefaultBackend> = AudioManager::new(settings).unwrap();
     manager
 });
+pub static SOUND_EFFECTS: GlobalSignal<HashMap<String, Vec<u8>>> =
+    Signal::global(|| HashMap::new());
 // const BASE_SAMPLE_RATE: f64 = 44100.0;
 #[derive(Debug, PartialEq, Clone)]
 pub struct SoundEffect {
