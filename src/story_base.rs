@@ -14,7 +14,20 @@ use crate::sound_effect::{SoundEffect, SOUND_EFFECTS};
 
 pub static GAMESTATE: GlobalSignal<Element> = Signal::global(|| None);
 pub static LOG: GlobalSignal<Vec<Vec<TextPrint>>> = Signal::global(|| vec![]);
+pub static TEXTCONFIG: GlobalSignal<TextConfig> = Signal::global(|| TextConfig {
+    speed: 1.,
+    auto_speed: 5000,
+    is_auto: false,
+    is_skip: false,
+});
 
+#[derive(Debug, PartialEq, Clone)]
+pub struct TextConfig {
+    speed: f32,
+    auto_speed: u32,
+    is_auto: bool,
+    is_skip: bool,
+}
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum TextOption {
     Normal,
@@ -405,7 +418,9 @@ impl ImagePrint {
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct Story {
+    pub title: Vec<TextPrint>,
     pub msg: Vec<TextPrint>,
+    pub center_img: Option<ImagePrint>,
     pub left_img: Vec<ImagePrint>,
     pub right_img: Vec<ImagePrint>,
     pub background: String,
@@ -413,8 +428,10 @@ pub struct Story {
 }
 impl Story {
     pub fn new(
+        title: Vec<TextPrint>,
         msg: Vec<TextPrint>,
         left_img: Vec<ImagePrint>,
+        center_img: Option<ImagePrint>,
         right_img: Vec<ImagePrint>,
         background: &str,
         class: &str,
@@ -422,12 +439,19 @@ impl Story {
         let background = background.to_owned();
         let class = class.to_owned();
         Story {
+            title,
             msg,
+            center_img,
             left_img,
             right_img,
             background,
             class,
         }
+    }
+
+    pub fn title(mut self, title: Vec<TextPrint>) -> Self {
+        self.title = title;
+        self
     }
 }
 
@@ -472,6 +496,19 @@ pub fn StoryPage(storys: Vec<Story>, next: Element) -> Element {
                     }
                 }
                 article{
+                    class: "imgae",
+                    if let Some(s) = &story(){
+                        // todo: 이미지가 가운데에 있는지 확인해야함!!
+                        if let Some(img) = s.center_img.clone(){
+                            img{
+                                loading: "eager",
+                                class: "bottom-ground {img.class}",
+                                style: "{img.style}left: 50%;transform: translateX(-50%);"
+                            }
+                        }
+                    }
+                }
+                article{
                     class: "image",
                     if let Some(s) = &story(){
                         for (index,image) in s.right_img.iter().enumerate() {
@@ -487,6 +524,7 @@ pub fn StoryPage(storys: Vec<Story>, next: Element) -> Element {
                 }
             }
             StoryBox{
+                title: story().map_or_else(|| vec![], |s| s.title),
                 box_class: "fixed f-middle bottom-ground x-pd msg-box",
                 box_style: "",
                 can_skip: true,
@@ -504,6 +542,7 @@ pub fn StoryPage(storys: Vec<Story>, next: Element) -> Element {
 struct DummyData {}
 #[component]
 fn StoryBox(
+    title: Vec<TextPrint>,
     story: Vec<TextPrint>,
     can_skip: bool,
     box_style: String,
@@ -512,7 +551,8 @@ fn StoryBox(
     show_log: bool,
 ) -> Element {
     let mut end = use_signal(|| false);
-    let mut skip = use_signal(|| false);
+    let skip = use_memo(move || TEXTCONFIG().is_skip);
+    let auto = use_memo(move || TEXTCONFIG().is_auto);
     let mut log = use_signal(|| false);
     let mut text_index = use_signal(|| 0_usize);
     let text_print = use_memo(use_reactive((&story,), |(story,)| story));
@@ -539,6 +579,7 @@ fn StoryBox(
             None
         }
     });
+    let title: Vec<Option<VNode>> = title.iter().map(|t| t.print()).collect();
 
     use_future(move || async move {
         loop {
@@ -547,7 +588,7 @@ fn StoryBox(
                 if skip() {
                     TimeoutFuture::new(5).await;
                 } else {
-                    TimeoutFuture::new(msg.speed).await;
+                    TimeoutFuture::new((msg.speed as f32 * TEXTCONFIG.read().speed) as u32).await;
                 }
                 if !log() {
                     if message_len() > msg_index() {
@@ -562,25 +603,35 @@ fn StoryBox(
                 }
             } else {
                 TimeoutFuture::new(10).await;
+                *end.write() = true;
                 if skip() {
                     LOG.write().push(text_print().clone());
                     on_next.call(DummyData {});
                     *text_index.write() = 0;
                     *msg_index.write() = 0;
+                } else if auto() {
+                    let mut count = 0;
+                    while count < TEXTCONFIG.read().auto_speed && end() {
+                        TimeoutFuture::new(5).await;
+                        count += 5;
+                    }
+                    LOG.write().push(text_print().clone());
+                    on_next.call(DummyData {});
+                    *text_index.write() = 0;
+                    *msg_index.write() = 0;
                 }
-                *end.write() = true;
             }
         }
     });
     let keydown = move |e: KeyboardEvent| {
         if (e.code() == Code::ControlLeft || e.code() == Code::ControlRight) && can_skip {
-            skip.set(true);
+            TEXTCONFIG.write().is_skip = true;
             info!("{}", skip());
         }
     };
     let keyup = move |e: KeyboardEvent| {
         if (e.code() == Code::ControlLeft || e.code() == Code::ControlRight) && can_skip {
-            skip.set(false);
+            TEXTCONFIG.write().is_skip = false;
         }
     };
     let click = move |_: MouseEvent| {
@@ -623,6 +674,12 @@ fn StoryBox(
                 onclick: click,
                 tabindex: 1,
                 autofocus: true,
+                div{
+                    class: "story-box-title",
+                    for t in title.iter(){
+                        {t}
+                    }
+                }
                 for t in before_message().iter(){
                     {t}
                 }
@@ -634,6 +691,24 @@ fn StoryBox(
                         e.stop_propagation();
                     },
                     "log",
+                }
+                if can_skip{
+                    nav{
+                        class: "msg-auto-button",
+                        onclick: move |e|{
+                            TEXTCONFIG.write().is_auto = !TEXTCONFIG.read().is_auto;
+                            e.stop_propagation();
+                        },
+                        "auto"
+                    }
+                    nav{
+                        class: "msg-auto-button",
+                        onclick: move |e|{
+                            TEXTCONFIG.write().is_skip = !TEXTCONFIG.read().is_skip;
+                            e.stop_propagation();
+                        },
+                        "skip"
+                    }
                 }
             }
         }
@@ -651,6 +726,7 @@ pub fn LightMessageBox(
     let mut story_index = use_signal(|| 0_usize);
     rsx! {
         StoryBox{
+            title: storys[story_index()].title.clone(),
             story: storys[story_index()].msg.clone(),
             box_style: box_style,
             can_skip: can_skip,
