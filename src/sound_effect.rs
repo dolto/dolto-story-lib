@@ -1,11 +1,13 @@
 use std::{collections::HashMap, error::Error, io::Cursor};
 
-use dioxus::signals::{GlobalSignal, Signal};
+use dioxus::signals::{GlobalSignal, Readable, Signal};
 use kira::{
     manager::{AudioManager, AudioManagerSettings, DefaultBackend},
     sound::static_sound::StaticSoundData,
 };
 use tracing::info;
+
+use crate::story_base::TEXTCONFIG;
 pub static AUDIO_MANAGER: GlobalSignal<AudioManager> = Signal::global(|| {
     let settings = AudioManagerSettings::default();
     // let mut capercities = Capacities::default();
@@ -94,7 +96,7 @@ impl SoundEffect {
     pub fn play(&self) -> Result<(), Box<dyn Error>> {
         let sound = self.base_sound.clone();
         let sound = sound.playback_rate(self.speed);
-        let sound = sound.volume(self.volum);
+        let sound = sound.volume(self.volum * TEXTCONFIG.read().sound_volum);
         let sound = sound.reverse(self.is_rev);
         // let track = AUDIO_MANAGER.write().add_sub_track({
         //     let mut builder = TrackBuilder::new();

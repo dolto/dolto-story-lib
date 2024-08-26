@@ -15,18 +15,22 @@ use crate::sound_effect::{SoundEffect, SOUND_EFFECTS};
 pub static GAMESTATE: GlobalSignal<Element> = Signal::global(|| None);
 pub static LOG: GlobalSignal<Vec<Vec<TextPrint>>> = Signal::global(|| vec![]);
 pub static TEXTCONFIG: GlobalSignal<TextConfig> = Signal::global(|| TextConfig {
+    sound_volum: 1.,
     speed: 1.,
     auto_speed: 5000,
     is_auto: false,
     is_skip: false,
+    is_close: false,
 });
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct TextConfig {
-    speed: f32,
-    auto_speed: u32,
-    is_auto: bool,
-    is_skip: bool,
+    pub sound_volum: f64,
+    pub speed: f32,
+    pub auto_speed: u32,
+    pub is_auto: bool,
+    pub is_skip: bool,
+    pub is_close: bool,
 }
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum TextOption {
@@ -259,7 +263,7 @@ impl TextPrint {
 
         while let Some(s) = s.pop_front() {
             let mut s = s.split("}}");
-            let mut option = s.next().unwrap().split(",");
+            let mut option = s.next().unwrap().split("|");
             let message = s.next().unwrap();
 
             let mut temp = TextPrint::default();
@@ -270,6 +274,7 @@ impl TextPrint {
                 let command = c_v.next().unwrap().trim();
                 let value = c_v.next().unwrap().trim();
 
+                info!("{command} : {value}");
                 match command {
                     "color" => {
                         temp = temp.color(value);
@@ -327,6 +332,7 @@ impl TextPrint {
                         let value = v.next().unwrap().split(")").next().unwrap().trim();
                         temp = temp.style(match command {
                             "min_max4" => {
+                                info!("{command} : {value}");
                                 let mut min_max =
                                     value.split(",").flat_map(|i| i.trim().parse::<f32>());
                                 let min = (min_max.next().unwrap(), min_max.next().unwrap());
@@ -335,7 +341,7 @@ impl TextPrint {
                                     let mut rng = thread_rng();
                                     let min = rng.gen_range(min.0..min.1);
                                     let max = rng.gen_range(max.0..max.1);
-                                    format!("--min:{:4};--max:{:4}", min, max)
+                                    format!("--min:{:.4}rem;--max:{:.4}rem", min, max)
                                 });
                                 res
                             }
@@ -344,8 +350,9 @@ impl TextPrint {
                                     value.split(",").flat_map(|i| i.trim().parse::<f32>());
                                 let min = min_max.next().unwrap();
                                 let max = min_max.next().unwrap();
-                                let res: Rc<dyn Fn() -> String> =
-                                    Rc::new(move || format!("--min:{:4};--max:{:4}", min, max));
+                                let res: Rc<dyn Fn() -> String> = Rc::new(move || {
+                                    format!("--min:{:.4}rem;--max:{:.4}rem", min, max)
+                                });
                                 res
                             }
                             _ => {
@@ -479,6 +486,9 @@ pub fn StoryPage(storys: Vec<Story>, next: Element) -> Element {
         main{
             style: "{background}",
             class: "{class}",
+            onclick: move |_| {
+                TEXTCONFIG.write().is_close = false;
+            },
             section{
                 class: "relative x-screen y-screen",
                 article{
@@ -503,7 +513,8 @@ pub fn StoryPage(storys: Vec<Story>, next: Element) -> Element {
                             img{
                                 loading: "eager",
                                 class: "bottom-ground {img.class}",
-                                style: "{img.style}left: 50%;transform: translateX(-50%);"
+                                style: "{img.style}left: 50%;transform: translateX(-50%);",
+                                src: "{img.name}"
                             }
                         }
                     }
@@ -550,9 +561,11 @@ fn StoryBox(
     on_next: EventHandler<DummyData>,
     show_log: bool,
 ) -> Element {
+    let mut text_config = use_signal(|| false);
     let mut end = use_signal(|| false);
     let skip = use_memo(move || TEXTCONFIG().is_skip);
     let auto = use_memo(move || TEXTCONFIG().is_auto);
+    let close = use_memo(move || TEXTCONFIG().is_close);
     let mut log = use_signal(|| false);
     let mut text_index = use_signal(|| 0_usize);
     let text_print = use_memo(use_reactive((&story,), |(story,)| story));
@@ -564,6 +577,11 @@ fn StoryBox(
             0
         }
     });
+    let box_style = if close() {
+        box_style + "visibility: collapse;"
+    } else {
+        box_style
+    };
 
     let before_message = use_memo(move || {
         text_print()
@@ -583,18 +601,22 @@ fn StoryBox(
 
     use_future(move || async move {
         loop {
-            if let Some(msg) = text_print().get(text_index()) {
+            if text_config() {
+                TimeoutFuture::new(5).await;
+            } else if let Some(msg) = text_print().get(text_index()) {
                 *end.write() = false;
                 if skip() {
                     TimeoutFuture::new(5).await;
                 } else {
-                    TimeoutFuture::new((msg.speed as f32 * TEXTCONFIG.read().speed) as u32).await;
+                    TimeoutFuture::new((msg.speed as f32 / TEXTCONFIG().speed) as u32).await;
                 }
                 if !log() {
                     if message_len() > msg_index() {
                         *msg_index.write() += 1;
                         if let Some(s) = &msg.sound {
-                            s().play().unwrap();
+                            if TEXTCONFIG().sound_volum != 0. {
+                                s().play().unwrap();
+                            }
                         }
                     } else {
                         *msg_index.write() = 0;
@@ -611,14 +633,17 @@ fn StoryBox(
                     *msg_index.write() = 0;
                 } else if auto() {
                     let mut count = 0;
-                    while count < TEXTCONFIG.read().auto_speed && end() {
+                    while count < TEXTCONFIG.read().auto_speed && end() && TEXTCONFIG.read().is_auto
+                    {
                         TimeoutFuture::new(5).await;
                         count += 5;
                     }
-                    LOG.write().push(text_print().clone());
-                    on_next.call(DummyData {});
-                    *text_index.write() = 0;
-                    *msg_index.write() = 0;
+                    if TEXTCONFIG.read().is_auto {
+                        LOG.write().push(text_print().clone());
+                        on_next.call(DummyData {});
+                        *text_index.write() = 0;
+                        *msg_index.write() = 0;
+                    }
                 }
             }
         }
@@ -646,10 +671,58 @@ fn StoryBox(
         }
     };
     rsx! {
-        if log() {
+        if text_config(){
+            section{
+                class: "textconfig",
+                label{"Sound Volume: {TEXTCONFIG.read().sound_volum}" }
+                input{
+                    r#type: "range",
+                    min: 0.,
+                    max: 2.,
+                    step: 0.1,
+                    value: "{TEXTCONFIG.read().sound_volum}",
+                    onchange: move |e|{
+                        TEXTCONFIG.write().sound_volum = e.data.value().parse().unwrap();
+                        e.stop_propagation();
+                    }
+                }
+                label{"Base Speed: {TEXTCONFIG.read().speed}" }
+                input{
+                    r#type: "range",
+                    min: 0.5,
+                    max: 2.,
+                    step: 0.1,
+                    value: "{TEXTCONFIG.read().speed}",
+                    onchange: move |e|{
+                        TEXTCONFIG.write().speed = e.data.value().parse().unwrap();
+                        e.stop_propagation();
+                    }
+                }
+                label{"Auto Sleep: {TEXTCONFIG.read().auto_speed / 1000}.{TEXTCONFIG.read().auto_speed % 1000 / 100} sec" }
+                input{
+                    r#type: "range",
+                    min: 0,
+                    max: 20000,
+                    step: 500,
+                    value: "{TEXTCONFIG.read().auto_speed}",
+                    onchange: move |e|{
+                        TEXTCONFIG.write().auto_speed = e.data.value().parse().unwrap();
+                        e.stop_propagation();
+                    }
+                }
+                nav{
+                    class: "setting-close",
+                    onclick: move |e|{
+                        *text_config.write() = false;
+                        e.stop_propagation();
+                    },
+                    "exit"
+                }
+            }
+        }else if log() {
             section {
                 class: "message-log",
-                for l in LOG().iter(){
+                for l in LOG().iter().rev(){
                     article{
                         for text in l.iter(){
                             {text.print()}
@@ -665,50 +738,68 @@ fn StoryBox(
                     "exit",
                 }
             }
-        }else {
+        } else {
             article{
                 class: "{box_class}",
                 style: "{box_style}",
-                onkeydown: keydown,
-                onkeyup: keyup,
-                onclick: click,
-                tabindex: 1,
-                autofocus: true,
-                div{
-                    class: "story-box-title",
-                    for t in title.iter(){
-                        {t}
-                    }
-                }
-                for t in before_message().iter(){
-                    {t}
-                }
-                {message}
                 nav{
                     class: "msg-log-button",
-                    onclick: move |e|{
-                        *log.write() = true;
-                        e.stop_propagation();
-                    },
-                    "log",
+                    span{
+                        onclick: move |e|{
+                            *log.write() = true;
+                            e.stop_propagation();
+                        },
+                        "log",
+                    }
+                    if can_skip{
+                        span{
+                            onclick: move |e|{
+                                let auto = !TEXTCONFIG.read().is_auto;
+                                TEXTCONFIG.write().is_auto = auto;
+                                e.stop_propagation();
+                            },
+                            "auto"
+                        }
+                        span{
+                            onclick: move |e|{
+                                let skip = !TEXTCONFIG.read().is_skip;
+                                TEXTCONFIG.write().is_skip = skip;
+                                e.stop_propagation();
+                            },
+                            "skip"
+                        }
+                    }
+                    span{
+                        onclick: move |e|{
+                            TEXTCONFIG.write().is_close = true;
+                            e.stop_propagation();
+                        },
+                        "close"
+                    }
+                    span{
+                        onclick: move |e|{
+                            *text_config.write() = true;
+                            e.stop_propagation();
+                        },
+                        "setting"
+                    }
                 }
-                if can_skip{
-                    nav{
-                        class: "msg-auto-button",
-                        onclick: move |e|{
-                            TEXTCONFIG.write().is_auto = !TEXTCONFIG.read().is_auto;
-                            e.stop_propagation();
-                        },
-                        "auto"
+                article{
+                    onkeydown: keydown,
+                    onkeyup: keyup,
+                    onclick: click,
+                    tabindex: 1,
+                    autofocus: true,
+                    div{
+                        class: "story-box-title",
+                        for t in title.iter(){
+                            {t}
+                        }
                     }
-                    nav{
-                        class: "msg-auto-button",
-                        onclick: move |e|{
-                            TEXTCONFIG.write().is_skip = !TEXTCONFIG.read().is_skip;
-                            e.stop_propagation();
-                        },
-                        "skip"
+                    for t in before_message().iter(){
+                        {t}
                     }
+                    {message}
                 }
             }
         }
