@@ -469,15 +469,8 @@ impl Story {
         self.left_img.push(img);
         self
     }
-    pub fn change_left_img(mut self, img: ImagePrint) -> Self {
-        let mut remove_index = 0;
+    pub fn change_left_img(mut self, img: ImagePrint, remove_index: usize) -> Self {
         self.left_img.push(img.clone());
-        for (index, i) in self.left_img.iter().enumerate() {
-            if i.clone() == img {
-                remove_index = index;
-                break;
-            }
-        }
         self.left_img.swap_remove(remove_index);
         self
     }
@@ -485,16 +478,9 @@ impl Story {
         self.right_img.push(img);
         self
     }
-    pub fn change_right_img(mut self, img: ImagePrint) -> Self {
-        let mut remove_index = 0;
-        self.left_img.push(img.clone());
-        for (index, i) in self.left_img.iter().enumerate() {
-            if i.clone() == img {
-                remove_index = index;
-                break;
-            }
-        }
-        self.left_img.swap_remove(remove_index);
+    pub fn change_right_img(mut self, img: ImagePrint, remove_index: usize) -> Self {
+        self.right_img.push(img.clone());
+        self.right_img.swap_remove(remove_index);
         self
     }
 
