@@ -460,6 +460,60 @@ impl Story {
         self.title = title;
         self
     }
+
+    pub fn msg(mut self, msg: Vec<TextPrint>) -> Self {
+        self.msg = msg;
+        self
+    }
+    pub fn add_left_img(mut self, img: ImagePrint) -> Self {
+        self.left_img.push(img);
+        self
+    }
+    pub fn change_left_img(mut self, img: ImagePrint) -> Self {
+        let mut remove_index = 0;
+        self.left_img.push(img.clone());
+        for (index, i) in self.left_img.iter().enumerate() {
+            if i.clone() == img {
+                remove_index = index;
+                break;
+            }
+        }
+        self.left_img.swap_remove(remove_index);
+        self
+    }
+    pub fn add_right_img(mut self, img: ImagePrint) -> Self {
+        self.right_img.push(img);
+        self
+    }
+    pub fn change_right_img(mut self, img: ImagePrint) -> Self {
+        let mut remove_index = 0;
+        self.left_img.push(img.clone());
+        for (index, i) in self.left_img.iter().enumerate() {
+            if i.clone() == img {
+                remove_index = index;
+                break;
+            }
+        }
+        self.left_img.swap_remove(remove_index);
+        self
+    }
+
+    pub fn background(mut self, background: &str) -> Self {
+        self.background = background.to_owned();
+        self
+    }
+    pub fn class(mut self, class: &str) -> Self {
+        self.class = class.to_owned();
+        self
+    }
+    pub fn change_center_img(mut self, img: ImagePrint) -> Self {
+        self.center_img = Some(img);
+        self
+    }
+    pub fn remove_center_img(mut self) -> Self {
+        self.center_img = None;
+        self
+    }
 }
 
 #[component]
