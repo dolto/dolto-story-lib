@@ -5,10 +5,20 @@ use std::{
 };
 
 use dioxus::prelude::*;
-use gloo_timers::future::TimeoutFuture;
 use rand::{thread_rng, Rng};
 // use tracing::info;
 // use web_sys::{AudioContext, AudioContextState};
+
+#[cfg(target_arch = "wasm32")]
+pub async fn wait(mili: u32) {
+    use gloo_timers::future::TimeoutFuture;
+    TimeoutFuture::new(mili).await;
+}
+#[cfg(not(target_arch = "wasm32"))]
+pub async fn wait(mili: u32) {
+    use std::time::Duration;
+    tokio::time::sleep(Duration::from_millis(mili as u64)).await;
+}
 
 use crate::sound_effect::{SoundEffect, SOUND_EFFECTS};
 
@@ -648,13 +658,13 @@ fn StoryBox(
     use_future(move || async move {
         loop {
             if text_config() {
-                TimeoutFuture::new(5).await;
+                wait(5).await;
             } else if let Some(msg) = text_print().get(text_index()) {
                 *end.write() = false;
                 if skip() {
-                    TimeoutFuture::new(5).await;
+                    wait(5).await;
                 } else {
-                    TimeoutFuture::new((msg.speed as f32 / TEXTCONFIG().speed) as u32).await;
+                    wait((msg.speed as f32 / TEXTCONFIG().speed) as u32).await;
                 }
                 if !log() {
                     if message_len() > msg_index() {
@@ -670,7 +680,7 @@ fn StoryBox(
                     }
                 }
             } else {
-                TimeoutFuture::new(10).await;
+                wait(10).await;
                 *end.write() = true;
                 if skip() {
                     LOG.write().push(text_print().clone());
@@ -681,7 +691,7 @@ fn StoryBox(
                     let mut count = 0;
                     while count < TEXTCONFIG.read().auto_speed && end() && TEXTCONFIG.read().is_auto
                     {
-                        TimeoutFuture::new(5).await;
+                        wait(5).await;
                         count += 5;
                     }
                     if TEXTCONFIG.read().is_auto {
