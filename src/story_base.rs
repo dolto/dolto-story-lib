@@ -7,7 +7,7 @@ use std::{
 use dioxus::prelude::*;
 use gloo_timers::future::TimeoutFuture;
 use rand::{thread_rng, Rng};
-use tracing::info;
+// use tracing::info;
 // use web_sys::{AudioContext, AudioContextState};
 
 use crate::sound_effect::{SoundEffect, SOUND_EFFECTS};
@@ -16,6 +16,7 @@ pub static GAMESTATE: GlobalSignal<Element> = Signal::global(|| None);
 pub static LOG: GlobalSignal<Vec<Vec<TextPrint>>> = Signal::global(|| vec![]);
 pub static TEXTCONFIG: GlobalSignal<TextConfig> = Signal::global(|| TextConfig {
     sound_volum: 1.,
+    music_volum: 1.,
     speed: 1.,
     auto_speed: 5000,
     is_auto: false,
@@ -26,6 +27,7 @@ pub static TEXTCONFIG: GlobalSignal<TextConfig> = Signal::global(|| TextConfig {
 #[derive(Debug, PartialEq, Clone)]
 pub struct TextConfig {
     pub sound_volum: f64,
+    pub music_volum: f64,
     pub speed: f32,
     pub auto_speed: u32,
     pub is_auto: bool,
@@ -274,7 +276,6 @@ impl TextPrint {
                 let command = c_v.next().unwrap().trim();
                 let value = c_v.next().unwrap().trim();
 
-                info!("{command} : {value}");
                 match command {
                     "color" => {
                         temp = temp.color(value);
@@ -332,7 +333,6 @@ impl TextPrint {
                         let value = v.next().unwrap().split(")").next().unwrap().trim();
                         temp = temp.style(match command {
                             "min_max4" => {
-                                info!("{command} : {value}");
                                 let mut min_max =
                                     value.split(",").flat_map(|i| i.trim().parse::<f32>());
                                 let min = (min_max.next().unwrap(), min_max.next().unwrap());
@@ -463,7 +463,12 @@ impl Story {
 }
 
 #[component]
-pub fn StoryPage(storys: Vec<Story>, next: Element) -> Element {
+pub fn StoryPage(
+    storys: Vec<Story>,
+    next: Element,
+    on_next: EventHandler<DummyData>,
+    skip_len: usize,
+) -> Element {
     let mut story_index = use_signal(|| 0_usize);
     let story = use_memo(move || storys.get(story_index()).cloned());
 
@@ -479,6 +484,7 @@ pub fn StoryPage(storys: Vec<Story>, next: Element) -> Element {
     };
 
     if story().is_none() {
+        on_next.call(DummyData {}); // 여기에 skip_len을 수정하는 로직을 만듦
         *GAMESTATE.write() = next.clone();
     }
 
@@ -508,7 +514,6 @@ pub fn StoryPage(storys: Vec<Story>, next: Element) -> Element {
                 article{
                     class: "imgae",
                     if let Some(s) = &story(){
-                        // todo: 이미지가 가운데에 있는지 확인해야함!!
                         if let Some(img) = s.center_img.clone(){
                             img{
                                 loading: "eager",
@@ -535,6 +540,7 @@ pub fn StoryPage(storys: Vec<Story>, next: Element) -> Element {
                 }
             }
             StoryBox{
+                skip_len: skip_len,
                 title: story().map_or_else(|| vec![], |s| s.title),
                 box_class: "fixed f-middle bottom-ground x-pd msg-box",
                 box_style: "",
@@ -543,14 +549,13 @@ pub fn StoryPage(storys: Vec<Story>, next: Element) -> Element {
                 show_log: true,
                 on_next: move |_|{
                     *story_index.write() += 1;
-                    info!("{}", story_index());
                 }
             }
         }
     }
 }
 
-struct DummyData {}
+pub struct DummyData {}
 #[component]
 fn StoryBox(
     title: Vec<TextPrint>,
@@ -560,6 +565,7 @@ fn StoryBox(
     box_class: String,
     on_next: EventHandler<DummyData>,
     show_log: bool,
+    skip_len: usize,
 ) -> Element {
     let mut text_config = use_signal(|| false);
     let mut end = use_signal(|| false);
@@ -649,9 +655,11 @@ fn StoryBox(
         }
     });
     let keydown = move |e: KeyboardEvent| {
-        if (e.code() == Code::ControlLeft || e.code() == Code::ControlRight) && can_skip {
+        if (e.code() == Code::ControlLeft || e.code() == Code::ControlRight)
+            && can_skip
+            && skip_len > text_index()
+        {
             TEXTCONFIG.write().is_skip = true;
-            info!("{}", skip());
         }
     };
     let keyup = move |e: KeyboardEvent| {
@@ -674,7 +682,19 @@ fn StoryBox(
         if text_config(){
             section{
                 class: "textconfig",
-                label{"Sound Volume: {TEXTCONFIG.read().sound_volum}" }
+                label{"Music Volume: {TEXTCONFIG.read().music_volum}" }
+                input{
+                    r#type: "range",
+                    min: 0.,
+                    max: 2.,
+                    step: 0.1,
+                    value: "{TEXTCONFIG.read().music_volum}",
+                    onchange: move |e|{
+                        TEXTCONFIG.write().music_volum = e.data.value().parse().unwrap();
+                        e.stop_propagation();
+                    }
+                }
+                label{"Effect Volume: {TEXTCONFIG.read().sound_volum}" }
                 input{
                     r#type: "range",
                     min: 0.,
@@ -762,8 +782,10 @@ fn StoryBox(
                         }
                         span{
                             onclick: move |e|{
-                                let skip = !TEXTCONFIG.read().is_skip;
-                                TEXTCONFIG.write().is_skip = skip;
+                                if skip_len > text_index(){
+                                    let skip = !TEXTCONFIG.read().is_skip;
+                                    TEXTCONFIG.write().is_skip = skip;
+                                }
                                 e.stop_propagation();
                             },
                             "skip"
@@ -813,10 +835,12 @@ pub fn LightMessageBox(
     can_skip: bool,
     box_class: String,
     show_log: bool,
+    skip_len: usize,
 ) -> Element {
     let mut story_index = use_signal(|| 0_usize);
     rsx! {
         StoryBox{
+            skip_len: skip_len,
             title: storys[story_index()].title.clone(),
             story: storys[story_index()].msg.clone(),
             box_style: box_style,

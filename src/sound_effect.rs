@@ -1,9 +1,10 @@
-use std::{collections::HashMap, error::Error, io::Cursor};
+use std::{collections::HashMap, error::Error, io::Cursor, time::Duration};
 
 use dioxus::signals::{GlobalSignal, Readable, Signal};
 use kira::{
     manager::{AudioManager, AudioManagerSettings, DefaultBackend},
-    sound::static_sound::StaticSoundData,
+    sound::static_sound::{StaticSoundData, StaticSoundHandle},
+    tween::Tween,
 };
 use tracing::info;
 
@@ -17,6 +18,7 @@ pub static AUDIO_MANAGER: GlobalSignal<AudioManager> = Signal::global(|| {
     let manager: AudioManager<DefaultBackend> = AudioManager::new(settings).unwrap();
     manager
 });
+pub static MUSIC: GlobalSignal<Option<StaticSoundHandle>> = Signal::global(|| None);
 pub static SOUND_EFFECTS: GlobalSignal<HashMap<String, Vec<u8>>> =
     Signal::global(|| HashMap::new());
 // const BASE_SAMPLE_RATE: f64 = 44100.0;
@@ -113,5 +115,40 @@ impl SoundEffect {
         (*AUDIO_MANAGER.write()).play(sound)?;
 
         Ok(())
+    }
+    pub fn music_play(&self) -> Result<(), Box<dyn Error>> {
+        let sound = self.base_sound.clone();
+        let sound = sound.playback_rate(self.speed);
+        let sound = sound.volume(self.volum * TEXTCONFIG.read().music_volum);
+        let sound = sound.reverse(self.is_rev);
+        // let track = AUDIO_MANAGER.write().add_sub_track({
+        //     let mut builder = TrackBuilder::new();
+        //     if self.reverb != 0. {
+        //         builder.add_effect(ReverbBuilder::new().damping(self.reverb));
+        //     }
+        //     // builder.add_effect(LfoBuilder::new().frequency(self.pitch));
+        //     // builder.add_effect(CompressorBuilder::new().ratio(self.speed));
+        //     // builder.add_effect();
+        //     builder
+        // })?;
+        if let Some(music) = MUSIC.write().as_mut() {
+            let mut tween = Tween::default();
+            tween.duration = Duration::from_millis(500);
+            music.stop(tween);
+        }
+
+        info!("{}", AUDIO_MANAGER.write().num_sounds());
+        let test = (*AUDIO_MANAGER.write()).play(sound)?;
+        *MUSIC.write() = Some(test);
+
+        Ok(())
+    }
+
+    pub fn music_stop() {
+        if let Some(music) = MUSIC.write().as_mut() {
+            let mut tween = Tween::default();
+            tween.duration = Duration::from_millis(500);
+            music.stop(tween);
+        }
     }
 }
