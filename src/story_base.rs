@@ -618,6 +618,7 @@ fn StoryBox(
     skip_len: usize,
 ) -> Element {
     let mut text_config = use_signal(|| false);
+    let _text_config = use_context_provider(move || text_config);
     let mut end = use_signal(|| false);
     let skip = use_memo(move || TEXTCONFIG().is_skip);
     let auto = use_memo(move || TEXTCONFIG().is_auto);
@@ -730,65 +731,7 @@ fn StoryBox(
     };
     rsx! {
         if text_config(){
-            section{
-                class: "textconfig",
-                label{"Music Volume: {TEXTCONFIG.read().music_volum}" }
-                input{
-                    r#type: "range",
-                    min: 0.,
-                    max: 2.,
-                    step: 0.1,
-                    value: "{TEXTCONFIG.read().music_volum}",
-                    onchange: move |e|{
-                        TEXTCONFIG.write().music_volum = e.data.value().parse().unwrap();
-                        e.stop_propagation();
-                    }
-                }
-                label{"Effect Volume: {TEXTCONFIG.read().sound_volum}" }
-                input{
-                    r#type: "range",
-                    min: 0.,
-                    max: 2.,
-                    step: 0.1,
-                    value: "{TEXTCONFIG.read().sound_volum}",
-                    onchange: move |e|{
-                        TEXTCONFIG.write().sound_volum = e.data.value().parse().unwrap();
-                        e.stop_propagation();
-                    }
-                }
-                label{"Base Speed: {TEXTCONFIG.read().speed}" }
-                input{
-                    r#type: "range",
-                    min: 0.5,
-                    max: 2.,
-                    step: 0.1,
-                    value: "{TEXTCONFIG.read().speed}",
-                    onchange: move |e|{
-                        TEXTCONFIG.write().speed = e.data.value().parse().unwrap();
-                        e.stop_propagation();
-                    }
-                }
-                label{"Auto Sleep: {TEXTCONFIG.read().auto_speed / 1000}.{TEXTCONFIG.read().auto_speed % 1000 / 100} sec" }
-                input{
-                    r#type: "range",
-                    min: 0,
-                    max: 20000,
-                    step: 500,
-                    value: "{TEXTCONFIG.read().auto_speed}",
-                    onchange: move |e|{
-                        TEXTCONFIG.write().auto_speed = e.data.value().parse().unwrap();
-                        e.stop_propagation();
-                    }
-                }
-                nav{
-                    class: "setting-close",
-                    onclick: move |e|{
-                        *text_config.write() = false;
-                        e.stop_propagation();
-                    },
-                    "exit"
-                }
-            }
+            Setting{}
         }else if log() {
             section {
                 class: "message-log",
@@ -862,10 +805,12 @@ fn StoryBox(
                     }
                 }
                 article{
-                    div{
-                        class: "story-box-title",
-                        for t in title.iter(){
-                            {t}
+                    if !title.is_empty(){
+                        div{
+                            class: "story-box-title",
+                            for t in title.iter(){
+                                {t}
+                            }
                         }
                     }
                     for t in before_message().iter(){
@@ -901,6 +846,72 @@ pub fn LightMessageBox(
             },
             show_log: show_log,
         }
+
+    }
+}
+#[component]
+pub fn Setting() -> Element {
+    let mut text_config = use_context::<Signal<bool>>();
+    rsx! {
+            section{
+                class: "textconfig",
+                label{"Music Volume: {TEXTCONFIG.read().music_volum}" }
+                input{
+                    r#type: "range",
+                    min: 0.,
+                    max: 2.,
+                    step: 0.1,
+                    value: "{TEXTCONFIG.read().music_volum}",
+                    onchange: move |e|{
+                        TEXTCONFIG.write().music_volum = e.data.value().parse().unwrap();
+                        e.stop_propagation();
+                    }
+                }
+                label{"Effect Volume: {TEXTCONFIG.read().sound_volum}" }
+                input{
+                    r#type: "range",
+                    min: 0.,
+                    max: 2.,
+                    step: 0.1,
+                    value: "{TEXTCONFIG.read().sound_volum}",
+                    onchange: move |e|{
+                        TEXTCONFIG.write().sound_volum = e.data.value().parse().unwrap();
+                        e.stop_propagation();
+                    }
+                }
+                label{"Base Speed: {TEXTCONFIG.read().speed}" }
+                input{
+                    r#type: "range",
+                    min: 0.5,
+                    max: 2.,
+                    step: 0.1,
+                    value: "{TEXTCONFIG.read().speed}",
+                    onchange: move |e|{
+                        TEXTCONFIG.write().speed = e.data.value().parse().unwrap();
+                        e.stop_propagation();
+                    }
+                }
+                label{"Auto Sleep: {TEXTCONFIG.read().auto_speed / 1000}.{TEXTCONFIG.read().auto_speed % 1000 / 100} sec" }
+                input{
+                    r#type: "range",
+                    min: 0,
+                    max: 20000,
+                    step: 500,
+                    value: "{TEXTCONFIG.read().auto_speed}",
+                    onchange: move |e|{
+                        TEXTCONFIG.write().auto_speed = e.data.value().parse().unwrap();
+                        e.stop_propagation();
+                    }
+                }
+                nav{
+                    class: "setting-close",
+                    onclick: move |e|{
+                        *text_config.write() = false;
+                        e.stop_propagation();
+                    },
+                    "exit"
+                }
+            }
 
     }
 }
