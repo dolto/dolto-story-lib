@@ -812,6 +812,11 @@ fn StoryBox(
             article{
                 class: "{box_class}",
                 style: "{box_style}",
+                onkeydown: keydown,
+                onkeyup: keyup,
+                onclick: click,
+                tabindex: 1,
+                autofocus: true,
                 nav{
                     class: "msg-log-button",
                     span{
@@ -857,11 +862,6 @@ fn StoryBox(
                     }
                 }
                 article{
-                    onkeydown: keydown,
-                    onkeyup: keyup,
-                    onclick: click,
-                    tabindex: 1,
-                    autofocus: true,
                     div{
                         class: "story-box-title",
                         for t in title.iter(){
