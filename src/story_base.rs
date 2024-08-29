@@ -32,6 +32,7 @@ pub static TEXTCONFIG: GlobalSignal<TextConfig> = Signal::global(|| TextConfig {
     is_auto: false,
     is_skip: false,
     is_close: false,
+    is_setting: false,
 });
 
 #[derive(Debug, PartialEq, Clone)]
@@ -43,6 +44,7 @@ pub struct TextConfig {
     pub is_auto: bool,
     pub is_skip: bool,
     pub is_close: bool,
+    pub is_setting: bool,
 }
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum TextOption {
@@ -120,7 +122,7 @@ impl Default for TextPrint {
             option: TextOption::Normal,
             msg: "".to_owned(),
             size: 1.,
-            speed: 20,
+            speed: 60,
             is_split: false,
             style: Rc::new(|| "".to_owned()),
             font: "hancom-malang".to_owned(),
@@ -617,8 +619,6 @@ fn StoryBox(
     show_log: bool,
     skip_len: usize,
 ) -> Element {
-    let mut text_config = use_signal(|| false);
-    let _text_config = use_context_provider(move || text_config);
     let mut end = use_signal(|| false);
     let skip = use_memo(move || TEXTCONFIG().is_skip);
     let auto = use_memo(move || TEXTCONFIG().is_auto);
@@ -655,10 +655,12 @@ fn StoryBox(
         }
     });
     let title: Vec<Option<VNode>> = title.iter().map(|t| t.print()).collect();
+    let auto_clicked = if auto() { "is_clicked" } else { "" };
+    let skip_clicked = if auto() { "is_clicked" } else { "" };
 
     use_future(move || async move {
         loop {
-            if text_config() {
+            if TEXTCONFIG().is_setting {
                 wait(5).await;
             } else if let Some(msg) = text_print().get(text_index()) {
                 *end.write() = false;
@@ -730,7 +732,7 @@ fn StoryBox(
         }
     };
     rsx! {
-        if text_config(){
+        if TEXTCONFIG().is_setting{
             Setting{}
         }else if log() {
             section {
@@ -763,6 +765,7 @@ fn StoryBox(
                 nav{
                     class: "msg-log-button",
                     span{
+                        class:"msg-log-span",
                         onclick: move |e|{
                             *log.write() = true;
                             e.stop_propagation();
@@ -771,6 +774,7 @@ fn StoryBox(
                     }
                     if can_skip{
                         span{
+                            class:"{auto_clicked} msg-auto-span",
                             onclick: move |e|{
                                 let auto = !TEXTCONFIG.read().is_auto;
                                 TEXTCONFIG.write().is_auto = auto;
@@ -779,6 +783,7 @@ fn StoryBox(
                             "auto"
                         }
                         span{
+                            class:"{skip_clicked} msg-skip-span",
                             onclick: move |e|{
                                 if skip_len > text_index(){
                                     let skip = !TEXTCONFIG.read().is_skip;
@@ -790,6 +795,7 @@ fn StoryBox(
                         }
                     }
                     span{
+                        class:"msg-close-span",
                         onclick: move |e|{
                             TEXTCONFIG.write().is_close = true;
                             e.stop_propagation();
@@ -797,8 +803,9 @@ fn StoryBox(
                         "close"
                     }
                     span{
+                        class:"msg-setting-span",
                         onclick: move |e|{
-                            *text_config.write() = true;
+                            TEXTCONFIG.write().is_setting = true;
                             e.stop_propagation();
                         },
                         "setting"
@@ -846,12 +853,10 @@ pub fn LightMessageBox(
             },
             show_log: show_log,
         }
-
     }
 }
 #[component]
 pub fn Setting() -> Element {
-    let mut text_config = use_context::<Signal<bool>>();
     rsx! {
             section{
                 class: "textconfig",
@@ -903,10 +908,11 @@ pub fn Setting() -> Element {
                         e.stop_propagation();
                     }
                 }
+                div{class: "setting-close"}
                 nav{
                     class: "setting-close",
                     onclick: move |e|{
-                        *text_config.write() = false;
+                        TEXTCONFIG.write().is_setting = false;
                         e.stop_propagation();
                     },
                     "exit"
