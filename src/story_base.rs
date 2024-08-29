@@ -536,7 +536,6 @@ pub fn StoryPage(
     };
 
     if story().is_none() {
-        on_next.call(DummyData {}); // 여기에 skip_len을 수정하는 로직을 만듦
         *GAMESTATE.write() = next.clone();
     }
 
@@ -600,6 +599,7 @@ pub fn StoryPage(
                 story: story().map_or_else(|| vec![], |s| s.msg),
                 show_log: true,
                 on_next: move |_|{
+                    on_next.call(DummyData {}); // 여기에 skip_len을 수정하는 로직을 만듦
                     *story_index.write() += 1;
                 }
             }
