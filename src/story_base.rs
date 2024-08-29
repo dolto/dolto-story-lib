@@ -121,7 +121,7 @@ impl Default for TextPrint {
             color: "black".to_owned(),
             option: TextOption::Normal,
             msg: "".to_owned(),
-            size: 1.,
+            size: 2.,
             speed: 60,
             is_split: false,
             style: Rc::new(|| "".to_owned()),
@@ -656,7 +656,7 @@ fn StoryBox(
     });
     let title: Vec<Option<VNode>> = title.iter().map(|t| t.print()).collect();
     let auto_clicked = if auto() { "is_clicked" } else { "" };
-    let skip_clicked = if auto() { "is_clicked" } else { "" };
+    let skip_clicked = if skip() { "is_clicked" } else { "" };
 
     use_future(move || async move {
         loop {
