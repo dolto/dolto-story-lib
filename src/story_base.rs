@@ -304,8 +304,10 @@ fn StoryBox(
                 wait(5).await;
             } else if let Some(msg) = text_print().get(text_index()) {
                 *end.write() = false;
-                if skip() {
+                if skip() && can_skip && skip_len > text_index() {
                     wait(5).await;
+                } else if skip() {
+                    TEXTCONFIG.write().is_skip = false;
                 } else {
                     wait((msg.speed as f32 / TEXTCONFIG().speed) as u32).await;
                 }
@@ -325,11 +327,13 @@ fn StoryBox(
             } else {
                 wait(10).await;
                 *end.write() = true;
-                if skip() {
+                if skip() && can_skip && skip_len > text_index() {
                     LOG.write().push(text_print().clone());
                     on_next.call(DummyData {});
                     *text_index.write() = 0;
                     *msg_index.write() = 0;
+                } else if skip() {
+                    TEXTCONFIG.write().is_skip = false;
                 } else if auto() {
                     let mut count = 0;
                     while count < TEXTCONFIG.read().auto_speed && end() && TEXTCONFIG.read().is_auto
