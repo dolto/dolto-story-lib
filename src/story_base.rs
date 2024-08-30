@@ -27,6 +27,7 @@ pub static TEXTCONFIG: GlobalSignal<TextConfig> = Signal::global(|| TextConfig {
     is_skip: false,
     is_close: false,
     is_setting: false,
+    is_log: false,
 });
 
 #[derive(Debug, PartialEq, Clone)]
@@ -39,6 +40,7 @@ pub struct TextConfig {
     pub is_skip: bool,
     pub is_close: bool,
     pub is_setting: bool,
+    pub is_log: bool,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -261,7 +263,7 @@ fn StoryBox(
     let skip = use_memo(move || TEXTCONFIG().is_skip);
     let auto = use_memo(move || TEXTCONFIG().is_auto);
     let close = use_memo(move || TEXTCONFIG().is_close);
-    let mut log = use_signal(|| false);
+    let log = use_memo(move || TEXTCONFIG().is_log);
     let mut text_index = use_signal(|| 0_usize);
     let text_print = use_memo(use_reactive((&story,), |(story,)| story));
     let mut msg_index = use_signal(|| 0_usize);
@@ -385,7 +387,7 @@ fn StoryBox(
                 nav{
                     class: "msg-log-button",
                     onclick: move |e| {
-                        *log.write() = false;
+                        TEXTCONFIG.write().is_log = false;
                         e.stop_propagation();
                     },
                     "exit",
@@ -405,7 +407,7 @@ fn StoryBox(
                     span{
                         class:"msg-log-span",
                         onclick: move |e|{
-                            *log.write() = true;
+                            TEXTCONFIG.write().is_log = true;
                             e.stop_propagation();
                         },
                         "log",
