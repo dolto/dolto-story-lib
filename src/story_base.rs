@@ -421,53 +421,55 @@ fn StoryBox(
                     {message}
                 }
             }
-            nav{
-                class: "msg-log-button",
-                span{
-                    class:"msg-log-span",
-                    onclick: move |e|{
-                        TEXTCONFIG.write().is_log = true;
-                        e.stop_propagation();
-                    },
-                    "log",
-                }
-                if can_skip{
+            if !close(){
+                nav{
+                    class: "msg-log-button",
                     span{
-                        class:"{auto_clicked} msg-auto-span",
+                        class:"msg-log-span",
                         onclick: move |e|{
-                            let auto = !TEXTCONFIG.read().is_auto;
-                            TEXTCONFIG.write().is_auto = auto;
+                            TEXTCONFIG.write().is_log = true;
                             e.stop_propagation();
                         },
-                        "auto"
+                        "log",
+                    }
+                    if can_skip{
+                        span{
+                            class:"{auto_clicked} msg-auto-span",
+                            onclick: move |e|{
+                                let auto = !TEXTCONFIG.read().is_auto;
+                                TEXTCONFIG.write().is_auto = auto;
+                                e.stop_propagation();
+                            },
+                            "auto"
+                        }
+                        span{
+                            class:"{skip_clicked} msg-skip-span",
+                            onclick: move |e|{
+                                if skip_len > text_index(){
+                                    let skip = !TEXTCONFIG.read().is_skip;
+                                    TEXTCONFIG.write().is_skip = skip;
+                                }
+                                e.stop_propagation();
+                            },
+                            "skip"
+                        }
                     }
                     span{
-                        class:"{skip_clicked} msg-skip-span",
+                        class:"msg-close-span",
                         onclick: move |e|{
-                            if skip_len > text_index(){
-                                let skip = !TEXTCONFIG.read().is_skip;
-                                TEXTCONFIG.write().is_skip = skip;
-                            }
+                            TEXTCONFIG.write().is_close = true;
                             e.stop_propagation();
                         },
-                        "skip"
+                        "close"
                     }
-                }
-                span{
-                    class:"msg-close-span",
-                    onclick: move |e|{
-                        TEXTCONFIG.write().is_close = true;
-                        e.stop_propagation();
-                    },
-                    "close"
-                }
-                span{
-                    class:"msg-setting-span",
-                    onclick: move |e|{
-                        TEXTCONFIG.write().is_setting = true;
-                        e.stop_propagation();
-                    },
-                    "setting"
+                    span{
+                        class:"msg-setting-span",
+                        onclick: move |e|{
+                            TEXTCONFIG.write().is_setting = true;
+                            e.stop_propagation();
+                        },
+                        "setting"
+                    }
                 }
             }
         }
