@@ -102,6 +102,14 @@ impl Story {
         self.left_img.push(img);
         self
     }
+    pub fn remove_left_img(mut self, index: usize) -> Self {
+        self.left_img.remove(index);
+        self
+    }
+    pub fn pop_left_img(mut self) -> Self {
+        self.left_img.pop();
+        self
+    }
     pub fn change_left_img(mut self, img: ImagePrint, remove_index: usize) -> Self {
         self.left_img.push(img.clone());
         self.left_img.swap_remove(remove_index);
@@ -109,6 +117,14 @@ impl Story {
     }
     pub fn add_right_img(mut self, img: ImagePrint) -> Self {
         self.right_img.push(img);
+        self
+    }
+    pub fn remove_right_img(mut self, index: usize) -> Self {
+        self.right_img.remove(index);
+        self
+    }
+    pub fn pop_right_img(mut self) -> Self {
+        self.right_img.pop();
         self
     }
     pub fn change_right_img(mut self, img: ImagePrint, remove_index: usize) -> Self {
