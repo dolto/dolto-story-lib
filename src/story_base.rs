@@ -141,8 +141,9 @@ pub fn StoryPage(
     next: Element,
     on_next: EventHandler<DummyData>,
     skip_len: usize,
+    skip: usize,
 ) -> Element {
-    let mut story_index = use_signal(|| 0_usize);
+    let mut story_index = use_signal(|| skip);
     let story = use_memo(move || storys.get(story_index()).cloned());
 
     let background = if let Some(s) = story() {
