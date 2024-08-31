@@ -280,6 +280,7 @@ fn StoryBox(
     let log = use_memo(move || TEXTCONFIG().is_log);
     let mut text_index = use_signal(|| 0_usize);
     let text_print = use_memo(use_reactive((&story,), |(story,)| story));
+    let story_index = use_memo(use_reactive((&story_index,), |(story_index,)| story_index));
     let mut msg_index = use_signal(|| 0_usize);
     let message_len = use_memo(move || {
         if let Some(msg) = text_print().get(text_index()) {
@@ -318,7 +319,7 @@ fn StoryBox(
                 wait(5).await;
             } else if let Some(msg) = text_print().get(text_index()) {
                 *end.write() = false;
-                if skip() && can_skip && skip_len > story_index {
+                if skip() && can_skip && skip_len > story_index() {
                     wait(5).await;
                 } else if skip() {
                     TEXTCONFIG.write().is_skip = false;
@@ -342,7 +343,7 @@ fn StoryBox(
             } else {
                 wait(10).await;
                 *end.write() = true;
-                if skip() && can_skip && skip_len > story_index {
+                if skip() && can_skip && skip_len > story_index() {
                     LOG.write().push(text_print().clone());
                     on_next.call(DummyData {});
                     *text_index.write() = 0;
@@ -369,7 +370,7 @@ fn StoryBox(
     let keydown = move |e: KeyboardEvent| {
         if (e.code() == Code::ControlLeft || e.code() == Code::ControlRight)
             && can_skip
-            && skip_len > story_index
+            && skip_len > story_index()
         {
             TEXTCONFIG.write().is_skip = true;
         } else {
