@@ -172,6 +172,7 @@ pub fn StoryPage(
     on_next: EventHandler<DummyData>,
     skip_len: usize,
     skip: usize,
+    other_setting: Element,
 ) -> Element {
     let mut story_index = use_signal(|| skip);
     let story = use_memo(move || storys.get(story_index()).cloned());
@@ -254,7 +255,8 @@ pub fn StoryPage(
                 on_next: move |_|{
                     on_next.call(DummyData {}); // 여기에 skip_len을 수정하는 로직을 만듦
                     *story_index.write() += 1;
-                }
+                },
+                other_setting: other_setting
             }
         }
     }
@@ -272,6 +274,7 @@ fn StoryBox(
     show_log: bool,
     skip_len: usize,
     story_index: usize,
+    other_setting: Element,
 ) -> Element {
     let mut end = use_signal(|| false);
     let skip = use_memo(move || TEXTCONFIG().is_skip);
@@ -395,7 +398,7 @@ fn StoryBox(
     };
     rsx! {
         if TEXTCONFIG().is_setting{
-            Setting{}
+            Setting{other: other_setting}
         }else if log() {
             section {
                 class: "message-log",
@@ -500,6 +503,7 @@ pub fn LightMessageBox(
     box_class: String,
     show_log: bool,
     skip_len: usize,
+    other_setting: Element,
 ) -> Element {
     let mut story_index = use_signal(|| 0_usize);
     rsx! {
@@ -514,12 +518,13 @@ pub fn LightMessageBox(
                 *story_index.write() += 1;
             },
             show_log: show_log,
-            story_index: story_index.read().clone()
+            story_index: story_index.read().clone(),
+            other_setting: other_setting
         }
     }
 }
 #[component]
-pub fn Setting() -> Element {
+pub fn Setting(other: Element) -> Element {
     rsx! {
             section{
                 class: "textconfig",
@@ -571,6 +576,7 @@ pub fn Setting() -> Element {
                         e.stop_propagation();
                     }
                 }
+                {other}
                 div{class: "setting-close"}
                 nav{
                     class: "setting-close",
