@@ -56,6 +56,18 @@ impl ImagePrint {
         let class = class.to_owned();
         ImagePrint { name, style, class }
     }
+    pub fn name(mut self, name: &str) -> Self {
+        self.name = name.to_owned();
+        self
+    }
+    pub fn style(mut self, style: &str) -> Self {
+        self.style = style.to_owned();
+        self
+    }
+    pub fn class(mut self, class: &str) -> Self {
+        self.class = class.to_owned();
+        self
+    }
 }
 
 #[derive(Clone, PartialEq, Debug)]
@@ -232,6 +244,7 @@ pub fn StoryPage(
             }
             StoryBox{
                 skip_len: skip_len,
+                story_index: story_index(),
                 title: story().map_or_else(|| vec![], |s| s.title),
                 box_class: "fixed f-middle bottom-ground x-pd msg-box",
                 box_style: "",
@@ -258,6 +271,7 @@ fn StoryBox(
     on_next: EventHandler<DummyData>,
     show_log: bool,
     skip_len: usize,
+    story_index: usize,
 ) -> Element {
     let mut end = use_signal(|| false);
     let skip = use_memo(move || TEXTCONFIG().is_skip);
@@ -304,10 +318,11 @@ fn StoryBox(
                 wait(5).await;
             } else if let Some(msg) = text_print().get(text_index()) {
                 *end.write() = false;
-                if skip() && can_skip && skip_len > text_index() {
+                if skip() && can_skip && skip_len > story_index {
                     wait(5).await;
                 } else if skip() {
                     TEXTCONFIG.write().is_skip = false;
+                    wait((msg.speed as f32 / TEXTCONFIG().speed) as u32).await;
                 } else {
                     wait((msg.speed as f32 / TEXTCONFIG().speed) as u32).await;
                 }
@@ -327,7 +342,7 @@ fn StoryBox(
             } else {
                 wait(10).await;
                 *end.write() = true;
-                if skip() && can_skip && skip_len > text_index() {
+                if skip() && can_skip && skip_len > story_index {
                     LOG.write().push(text_print().clone());
                     on_next.call(DummyData {});
                     *text_index.write() = 0;
@@ -354,9 +369,11 @@ fn StoryBox(
     let keydown = move |e: KeyboardEvent| {
         if (e.code() == Code::ControlLeft || e.code() == Code::ControlRight)
             && can_skip
-            && skip_len > text_index()
+            && skip_len > story_index
         {
             TEXTCONFIG.write().is_skip = true;
+        } else {
+            TEXTCONFIG.write().is_skip = false;
         }
     };
     let keyup = move |e: KeyboardEvent| {
@@ -445,10 +462,8 @@ fn StoryBox(
                         span{
                             class:"{skip_clicked} msg-skip-span",
                             onclick: move |e|{
-                                if skip_len > text_index(){
-                                    let skip = !TEXTCONFIG.read().is_skip;
-                                    TEXTCONFIG.write().is_skip = skip;
-                                }
+                                let skip = !TEXTCONFIG.read().is_skip;
+                                TEXTCONFIG.write().is_skip = skip;
                                 e.stop_propagation();
                             },
                             "skip"
@@ -498,6 +513,7 @@ pub fn LightMessageBox(
                 *story_index.write() += 1;
             },
             show_log: show_log,
+            story_index: story_index.read().clone()
         }
     }
 }
