@@ -606,10 +606,10 @@ fn StoryBox(
         if let Some(msg) = text_print().get(text_index()) {
             msg.part_print(msg_index())
         } else {
-            None
+            rsx! {}
         }
     });
-    let title: Vec<Option<VNode>> = title.iter().map(|t| t.print()).collect();
+    let title: Vec<Element> = title.iter().map(|t| t.print()).collect();
     let auto_clicked = if auto() { "is_clicked" } else { "" };
     let skip_clicked = if skip() { "is_clicked" } else { "" };
 
