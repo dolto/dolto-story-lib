@@ -52,7 +52,7 @@ pub async fn wait(mili: u32) {
 
 /// Global variables for routing operations
 /// (If you don't use the Route function to avoid being affected by url, it will be easier to upload on itch.io , etc.)
-pub static GAMESTATE: GlobalSignal<Element> = Signal::global(|| None);
+pub static GAMESTATE: GlobalSignal<Element> = Signal::global(|| rsx! {});
 /// Global variables for message Log
 pub static LOG: GlobalSignal<Vec<Vec<TextPrint>>> = Signal::global(|| vec![]);
 /// Global variables for text config
@@ -712,7 +712,7 @@ fn StoryBox(
                         TEXTCONFIG.write().is_log = false;
                         e.stop_propagation();
                     },
-                    "exit",
+                    "exit"
                 }
             }
         } else {
@@ -748,7 +748,7 @@ fn StoryBox(
                             TEXTCONFIG.write().is_log = true;
                             e.stop_propagation();
                         },
-                        "log",
+                        "log"
                     }
                     if can_skip{
                         span{

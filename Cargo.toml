@@ -1,6 +1,6 @@
 [package]
 name = "story_lib"
-version = "0.1.56"
+version = "0.1.57"
 edition = "2021"
 license = "MIT"
 description = "A talking system for dioxus game"
@@ -18,10 +18,10 @@ kira = "0.9.4"
 # rubato = "0.15.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-dioxus = { version = "0.5", features = ["web"] }
+dioxus = { version = "0.6.0-alpha.2", features = ["web"] }
 getrandom = { version = "0.2.15", features = ["js"] }
 gloo-timers = { version = "0.3.0", features = ["futures"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-dioxus = { version = "0.5", features = ["desktop"] }
+dioxus = { version = "0.6.0-alpha.2", features = ["desktop"] }
 tokio = { version = "1.39.3", features = ["time"] }
