@@ -5,19 +5,57 @@ use dioxus::prelude::*;
 // use tracing::info;
 // use web_sys::{AudioContext, AudioContextState};
 
+/// wait for milisecondes
+/// # Examples
+/// ```
+/// #[component]
+/// fn TestCounter() -> Element {
+///     let mut count = use_signal(|| 0);
+///     use_future(move || async move {
+///         loop {
+///             wait(1000).await;
+///             *count.write() += 1;
+///         }
+///     });
+///     rsx! {
+///         h1{"{count}"}
+///     }
+/// }
+/// ```
 #[cfg(target_arch = "wasm32")]
 pub async fn wait(mili: u32) {
     use gloo_timers::future::TimeoutFuture;
     TimeoutFuture::new(mili).await;
 }
+/// wait for milisecondes
+/// # Examples
+/// ```
+/// #[component]
+/// fn TestCounter() -> Element {
+///     let mut count = use_signal(|| 0);
+///     use_future(move || async move {
+///         loop {
+///             wait(1000).await;
+///             *count.write() += 1;
+///         }
+///     });
+///     rsx! {
+///         h1{"{count}"}
+///     }
+/// }
+/// ```
 #[cfg(not(target_arch = "wasm32"))]
 pub async fn wait(mili: u32) {
     use std::time::Duration;
     tokio::time::sleep(Duration::from_millis(mili as u64)).await;
 }
 
+/// Global variables for routing operations
+/// (If you don't use the Route function to avoid being affected by url, it will be easier to upload on itch.io , etc.)
 pub static GAMESTATE: GlobalSignal<Element> = Signal::global(|| None);
+/// Global variables for message Log
 pub static LOG: GlobalSignal<Vec<Vec<TextPrint>>> = Signal::global(|| vec![]);
+/// Global variables for text config
 pub static TEXTCONFIG: GlobalSignal<TextConfig> = Signal::global(|| TextConfig {
     sound_volum: 1.,
     music_volum: 1.,
@@ -30,16 +68,27 @@ pub static TEXTCONFIG: GlobalSignal<TextConfig> = Signal::global(|| TextConfig {
     is_log: false,
 });
 
+/// a number of settings involved in the output of text
 #[derive(Debug, PartialEq, Clone)]
 pub struct TextConfig {
+    /// sound effect for volum play()
     pub sound_volum: f64,
+    /// music volum for music_play()
     pub music_volum: f64,
+    /// text print speed Higher, faster
     pub speed: f32,
+    /// auto next working, miliseconds
     pub auto_speed: u32,
+
+    /// other state value
     pub is_auto: bool,
+    /// other state value
     pub is_skip: bool,
+    /// other state value
     pub is_close: bool,
+    /// other state value
     pub is_setting: bool,
+    /// other state value
     pub is_log: bool,
 }
 
@@ -70,6 +119,33 @@ impl ImagePrint {
     }
 }
 
+/// # Story
+/// A story that stores the speaker's name and content, left, center, and center photos, and background style and class information
+/// ## Example
+/// ```
+/// pub fn test_content() -> Vec<Story> {
+///     let mut base_story = Story::new(
+///         TextPrint::parse("{{{}}}tester".to_owned()),
+///         vec![],
+///         vec![],
+///         None,
+///         vec![],
+///         "",
+///         "test-class",
+///     );
+///     vec![
+///         base_story
+///             .clone()
+///             .msg(TextPrint::parse("{{{}}}this is test story".to_owned())),
+///         {
+///             base_story = base_story.class("test2-class");
+///             base_story.clone().msg(TextPrint::parse(
+///                 "{{{}}}you can change filed like that".to_owned(),
+///             ))
+///         },
+///     ]
+/// }
+/// ```
 #[derive(Clone, PartialEq, Debug)]
 pub struct Story {
     pub title: Vec<TextPrint>,
@@ -79,6 +155,19 @@ pub struct Story {
     pub right_img: Vec<ImagePrint>,
     pub background: String,
     pub class: String,
+}
+impl Default for Story {
+    fn default() -> Self {
+        Story {
+            title: vec![],
+            msg: vec![],
+            center_img: None,
+            left_img: vec![],
+            right_img: vec![],
+            background: "".to_owned(),
+            class: "".to_owned(),
+        }
+    }
 }
 impl Story {
     pub fn new(
@@ -103,68 +192,250 @@ impl Story {
         }
     }
 
+    /// change story title
+    /// # Example
+    /// ```
+    /// fn test() {
+    ///     let mut story_base = Story::default();
+    ///     story_base = story_base.title(TextPrint::parse("{{{}}}change title".to_owned()));
+    ///     assert_eq!(
+    ///         story_base.title,
+    ///         TextPrint::parse("{{{}}}change title".to_owned())
+    ///     );
+    /// }
+    /// ```
     pub fn title(mut self, title: Vec<TextPrint>) -> Self {
         self.title = title;
         self
     }
 
+    /// change story message
+    /// # Example
+    /// ```
+    /// fn test() {
+    ///     let mut story_base = Story::default();
+    ///     story_base = story_base.msg(TextPrint::parse("{{{}}}change title".to_owned()));
+    ///     assert_eq!(
+    ///         story_base.msg,
+    ///         TextPrint::parse("{{{}}}change title".to_owned())
+    ///     );
+    /// }
+    /// ```
     pub fn msg(mut self, msg: Vec<TextPrint>) -> Self {
         self.msg = msg;
         self
     }
+    /// add story left image
+    /// # Example
+    /// ```
+    /// fn test() {
+    ///     let mut story_base = Story::default();
+    ///     story_base = story_base.add_left_img(ImagePrint::new("image/add-img.webp", "", "add-class"));
+    ///     assert_eq!(
+    ///         story_base.left_img[0],
+    ///         ImagePrint::new("image/add-img.webp", "", "add-class")
+    ///     );
+    /// }
+    /// ```
     pub fn add_left_img(mut self, img: ImagePrint) -> Self {
         self.left_img.push(img);
         self
     }
+    /// remove index story left image
+    /// # Example
+    /// ```
+    /// fn test() {
+    ///     let mut story_base = Story::default();
+    ///     story_base =
+    ///         story_base.add_left_img(ImagePrint::new("image/add-img.webp", "", "add-class"));
+    ///     story_base = story_base.remove_left_img(0);
+    ///     assert_eq!(story_base.left_img, vec![]);
+    /// }
+    /// ```
     pub fn remove_left_img(mut self, index: usize) -> Self {
         self.left_img.remove(index);
         self
     }
+    /// remove back story left image
+    /// # Example
+    /// ```
+    /// fn test() {
+    ///     let mut story_base = Story::default();
+    ///     story_base = story_base.add_left_img(ImagePrint::new("image/add-img.webp", "", "add-class"));
+    ///     story_base = story_base.pop_left_img();
+    ///     assert_eq!(story_base.left_img, vec![]);
+    /// }
+    /// ```
     pub fn pop_left_img(mut self) -> Self {
         self.left_img.pop();
         self
     }
+    /// add and swap remove story left image
+    /// # Example
+    /// ```
+    /// fn test() {
+    ///     let mut story_base = Story::default();
+    ///     story_base =
+    ///         story_base.add_left_img(ImagePrint::new("image/add-wrong-img.webp", "", "add-class"));
+    ///     story_base =
+    ///         story_base.change_left_img(ImagePrint::new("image/add-img.webp", "", "add-class"), 0);
+    ///     assert_eq!(
+    ///         story_base.left_img[0],
+    ///         ImagePrint::new("image/add-img.webp", "", "add-class")
+    ///     );
+    ///     assert_eq!(story_base.left_img.get(1), None);
+    /// }
+    /// ```
     pub fn change_left_img(mut self, img: ImagePrint, remove_index: usize) -> Self {
         self.left_img.push(img.clone());
         self.left_img.swap_remove(remove_index);
         self
     }
+    /// add story right image
+    /// # Example
+    /// ```
+    /// fn test() {
+    ///     let mut story_base = Story::default();
+    ///     story_base = story_base.add_right_img(ImagePrint::new("image/add-img.webp", "", "add-class"));
+    ///     assert_eq!(
+    ///         story_base.right_img[0],
+    ///         ImagePrint::new("image/add-img.webp", "", "add-class")
+    ///     );
+    /// }
+    /// ```
     pub fn add_right_img(mut self, img: ImagePrint) -> Self {
         self.right_img.push(img);
         self
     }
+    /// remove index story right image
+    /// # Example
+    /// ```
+    /// fn test() {
+    ///     let mut story_base = Story::default();
+    ///     story_base =
+    ///         story_base.add_right_img(ImagePrint::new("image/add-img.webp", "", "add-class"));
+    ///     story_base = story_base.remove_right_img(0);
+    ///     assert_eq!(story_base.right_img, vec![]);
+    /// }
+    /// ```
     pub fn remove_right_img(mut self, index: usize) -> Self {
         self.right_img.remove(index);
         self
     }
+    /// remove back story right image
+    /// # Example
+    /// ```
+    /// fn test() {
+    ///     let mut story_base = Story::default();
+    ///     story_base = story_base.add_right_img(ImagePrint::new("image/add-img.webp", "", "add-class"));
+    ///     story_base = story_base.pop_right_img();
+    ///     assert_eq!(story_base.right_img, vec![]);
+    /// }
+    /// ```
     pub fn pop_right_img(mut self) -> Self {
         self.right_img.pop();
         self
     }
+    /// add and swap remove story right image
+    /// # Example
+    /// ```
+    /// fn test() {
+    ///     let mut story_base = Story::default();
+    ///     story_base =
+    ///         story_base.add_right_img(ImagePrint::new("image/add-wrong-img.webp", "", "add-class"));
+    ///     story_base =
+    ///         story_base.change_right_img(ImagePrint::new("image/add-img.webp", "", "add-class"), 0);
+    ///     assert_eq!(
+    ///         story_base.right_img[0],
+    ///         ImagePrint::new("image/add-img.webp", "", "add-class")
+    ///     );
+    ///     assert_eq!(story_base.right_img.get(1), None);
+    /// }
+    /// ```
     pub fn change_right_img(mut self, img: ImagePrint, remove_index: usize) -> Self {
         self.right_img.push(img.clone());
         self.right_img.swap_remove(remove_index);
         self
     }
 
+    /// change story background style
+    /// # Example
+    /// ```
+    /// fn test() {
+    ///     let story_base = Story::default().background("width:100%;");
+    ///     assert_eq!(story_base.background.as_str(), "width:100%;");
+    /// }
+    /// ```
     pub fn background(mut self, background: &str) -> Self {
         self.background = background.to_owned();
         self
     }
+    /// change story background class
+    /// # Example
+    /// ```
+    /// fn test() {
+    ///     let story_base = Story::default().class("some-class");
+    ///     assert_eq!(story_base.class.as_str(), "some-class");
+    /// }
+    /// ```
     pub fn class(mut self, class: &str) -> Self {
         self.class = class.to_owned();
         self
     }
+    /// change story background class
+    /// # Example
+    /// ```
+    /// fn test() {
+    ///     let story_base = Story::default().change_center_img(ImagePrint::new(
+    ///         "image/add-wrong-img.webp",
+    ///         "",
+    ///         "add-class",
+    ///     ));
+    ///     assert_eq!(
+    ///         story_base.center_img.unwrap(),
+    ///         ImagePrint::new("image/add-wrong-img.webp", "", "add-class")
+    ///     );
+    /// }
+    /// ```
     pub fn change_center_img(mut self, img: ImagePrint) -> Self {
         self.center_img = Some(img);
         self
     }
+    /// change story background class
+    /// # Example
+    /// ```
+    /// fn test() {
+    ///     let story_base = Story::default()
+    ///         .change_center_img(ImagePrint::new("image/add-wrong-img.webp", "", "add-class"))
+    ///         .remove_center_img();
+    ///     assert_eq!(story_base.center_img, None);
+    /// }
+    /// ```
     pub fn remove_center_img(mut self) -> Self {
         self.center_img = None;
         self
     }
 }
 
+/// The ability to print Vec<Story> in order and move to the next page at the end of the story
+/// ## Example
+/// ```
+/// #[component]
+/// pub fn TestStoryPage() -> Element {
+///     rsx! {
+///         StoryPage{
+///             storys: vec![/*some story*/],
+///             next: rsx!{},
+///             on_next: move |_| {
+///                 // next story will call this closure
+///             },
+///             skip_len: 0, // you can setting to max skip index
+///             skip: 0, // you can setting to start story index
+///             other_setting: rsx!{} // you can add other setting component
+///         }
+///     }
+/// }
+/// ```
 #[component]
 pub fn StoryPage(
     storys: Vec<Story>,
@@ -251,7 +522,6 @@ pub fn StoryPage(
                 box_style: "",
                 can_skip: true,
                 story: story().map_or_else(|| vec![], |s| s.msg),
-                show_log: true,
                 on_next: move |_|{
                     on_next.call(DummyData {}); // 여기에 skip_len을 수정하는 로직을 만듦
                     *story_index.write() += 1;
@@ -263,6 +533,34 @@ pub fn StoryPage(
 }
 
 pub struct DummyData {}
+
+/// The ability to print Vec<TextPrint>
+/// #### A component that is not recommended for direct use.
+/// #### Consider using LightMessageBox
+///
+/// ## Example
+/// ```
+/// #[component]
+/// pub fn TestStoryBox() -> Element {
+///     rsx! {
+///         StoryBox{
+///             title: vec![/*speaker's name*/],
+///             story: vec![/*some story*/],
+///             can_skip: true, // You can set whether skip is possible or not
+///             box_style: "box-style", // you can setting to box style
+///             box_class: "box-class", // you can setting to box class
+///             on_next: move |_| {
+///                 // next story will call this closure
+///             },
+///             skip_len: 0,
+///             story_index: 0,
+///             other_setting: rsx!{
+///                 // you can setting to other setting component
+///             }
+///         }
+///     }
+/// }
+/// ```
 #[component]
 fn StoryBox(
     title: Vec<TextPrint>,
@@ -271,7 +569,6 @@ fn StoryBox(
     box_style: String,
     box_class: String,
     on_next: EventHandler<DummyData>,
-    show_log: bool,
     skip_len: usize,
     story_index: usize,
     other_setting: Element,
@@ -495,17 +792,37 @@ fn StoryBox(
     }
 }
 
+/// Implement small speech balloons, etc. A lightweight version of StoryPage
+/// Image output is not supported.
+/// # Example
+/// ```
+/// #[component]
+/// fn TestLightMessageBox() -> Element {
+///     rsx! {
+///         LightMessageBox{
+///              storys: vec![/*some story*/],
+///              skip_len: 0, // you can setting to max skip index
+///              skip: 0, // you can setting to start story index
+///              box_style: "box-style", // you can setting to box style
+///              box_class: "box-class", // you can setting to box class
+///              other_setting: rsx!{}, // you can add other setting component
+///              can_skip: false, // You can set whether skip is possible or not
+///         }
+///     }
+/// }
+/// ```
+
 #[component]
 pub fn LightMessageBox(
     storys: Vec<Story>,
     box_style: String,
     can_skip: bool,
     box_class: String,
-    show_log: bool,
     skip_len: usize,
     other_setting: Element,
+    skip: usize,
 ) -> Element {
-    let mut story_index = use_signal(|| 0_usize);
+    let mut story_index = use_signal(|| skip);
     rsx! {
         StoryBox{
             skip_len: skip_len,
@@ -517,7 +834,6 @@ pub fn LightMessageBox(
             on_next: move |_| {
                 *story_index.write() += 1;
             },
-            show_log: show_log,
             story_index: story_index.read().clone(),
             other_setting: other_setting
         }
