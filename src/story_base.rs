@@ -821,6 +821,7 @@ pub fn LightMessageBox(
     skip_len: usize,
     other_setting: Element,
     skip: usize,
+    on_next: EventHandler<DummyData>,
 ) -> Element {
     let mut story_index = use_signal(|| skip);
     rsx! {
@@ -832,6 +833,7 @@ pub fn LightMessageBox(
             can_skip: can_skip,
             box_class: box_class,
             on_next: move |_| {
+                on_next.call(DummyData{});
                 *story_index.write() += 1;
             },
             story_index: story_index.read().clone(),
