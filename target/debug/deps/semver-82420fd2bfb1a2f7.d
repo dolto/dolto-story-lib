@@ -1,0 +1,13 @@
+/mnt/dev_disk/rust_study/cyoa-dioxus/story_lib/target/debug/deps/libsemver-82420fd2bfb1a2f7.rmeta: /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/semver-1.0.23/src/lib.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/semver-1.0.23/src/backport.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/semver-1.0.23/src/display.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/semver-1.0.23/src/error.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/semver-1.0.23/src/eval.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/semver-1.0.23/src/identifier.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/semver-1.0.23/src/impls.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/semver-1.0.23/src/parse.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/semver-1.0.23/src/serde.rs
+
+/mnt/dev_disk/rust_study/cyoa-dioxus/story_lib/target/debug/deps/semver-82420fd2bfb1a2f7.d: /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/semver-1.0.23/src/lib.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/semver-1.0.23/src/backport.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/semver-1.0.23/src/display.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/semver-1.0.23/src/error.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/semver-1.0.23/src/eval.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/semver-1.0.23/src/identifier.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/semver-1.0.23/src/impls.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/semver-1.0.23/src/parse.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/semver-1.0.23/src/serde.rs
+
+/home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/semver-1.0.23/src/lib.rs:
+/home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/semver-1.0.23/src/backport.rs:
+/home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/semver-1.0.23/src/display.rs:
+/home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/semver-1.0.23/src/error.rs:
+/home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/semver-1.0.23/src/eval.rs:
+/home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/semver-1.0.23/src/identifier.rs:
+/home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/semver-1.0.23/src/impls.rs:
+/home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/semver-1.0.23/src/parse.rs:
+/home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/semver-1.0.23/src/serde.rs:

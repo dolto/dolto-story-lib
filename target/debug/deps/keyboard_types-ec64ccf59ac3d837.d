@@ -1,0 +1,11 @@
+/mnt/dev_disk/rust_study/cyoa-dioxus/story_lib/target/debug/deps/libkeyboard_types-ec64ccf59ac3d837.rmeta: /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/keyboard-types-0.7.0/src/lib.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/keyboard-types-0.7.0/src/code.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/keyboard-types-0.7.0/src/key.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/keyboard-types-0.7.0/src/location.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/keyboard-types-0.7.0/src/modifiers.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/keyboard-types-0.7.0/src/shortcuts.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/keyboard-types-0.7.0/src/webdriver.rs
+
+/mnt/dev_disk/rust_study/cyoa-dioxus/story_lib/target/debug/deps/keyboard_types-ec64ccf59ac3d837.d: /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/keyboard-types-0.7.0/src/lib.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/keyboard-types-0.7.0/src/code.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/keyboard-types-0.7.0/src/key.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/keyboard-types-0.7.0/src/location.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/keyboard-types-0.7.0/src/modifiers.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/keyboard-types-0.7.0/src/shortcuts.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/keyboard-types-0.7.0/src/webdriver.rs
+
+/home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/keyboard-types-0.7.0/src/lib.rs:
+/home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/keyboard-types-0.7.0/src/code.rs:
+/home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/keyboard-types-0.7.0/src/key.rs:
+/home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/keyboard-types-0.7.0/src/location.rs:
+/home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/keyboard-types-0.7.0/src/modifiers.rs:
+/home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/keyboard-types-0.7.0/src/shortcuts.rs:
+/home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/keyboard-types-0.7.0/src/webdriver.rs:

@@ -8,6 +8,9 @@ description = "A talking system for dioxus game"
 [lib]
 path = "src/lib.rs"
 
+[workspace]
+members = ["make_story_file"]
+
 [dependencies]
 # Debug
 tracing = "0.1.40"

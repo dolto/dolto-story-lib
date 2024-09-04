@@ -1,0 +1,10 @@
+/mnt/dev_disk/rust_study/cyoa-dioxus/story_lib/target/debug/deps/libzvariant_derive-77f5cd76bbdd0ec1.so: /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/zvariant_derive-4.0.0/src/lib.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/zvariant_derive-4.0.0/src/dict.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/zvariant_derive-4.0.0/src/type.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/zvariant_derive-4.0.0/src/utils.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/zvariant_derive-4.0.0/src/value.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/zvariant_derive-4.0.0/src/../README.md
+
+/mnt/dev_disk/rust_study/cyoa-dioxus/story_lib/target/debug/deps/zvariant_derive-77f5cd76bbdd0ec1.d: /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/zvariant_derive-4.0.0/src/lib.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/zvariant_derive-4.0.0/src/dict.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/zvariant_derive-4.0.0/src/type.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/zvariant_derive-4.0.0/src/utils.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/zvariant_derive-4.0.0/src/value.rs /home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/zvariant_derive-4.0.0/src/../README.md
+
+/home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/zvariant_derive-4.0.0/src/lib.rs:
+/home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/zvariant_derive-4.0.0/src/dict.rs:
+/home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/zvariant_derive-4.0.0/src/type.rs:
+/home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/zvariant_derive-4.0.0/src/utils.rs:
+/home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/zvariant_derive-4.0.0/src/value.rs:
+/home/dolto/.cargo/registry/src/index.crates.io-6f17d22bba15001f/zvariant_derive-4.0.0/src/../README.md:
