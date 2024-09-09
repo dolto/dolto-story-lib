@@ -62,7 +62,7 @@ pub static TEXTCONFIG: GlobalSignal<TextConfig> = Signal::global(|| TextConfig {
     speed: 1.,
     auto_speed: 5000,
     is_auto: false,
-    is_skip: false,
+    is_ffward: false,
     is_close: false,
     is_setting: false,
     is_log: false,
@@ -83,7 +83,7 @@ pub struct TextConfig {
     /// other state value
     pub is_auto: bool,
     /// other state value
-    pub is_skip: bool,
+    pub is_ffward: bool,
     /// other state value
     pub is_close: bool,
     /// other state value
@@ -574,7 +574,7 @@ fn StoryBox(
     other_setting: Element,
 ) -> Element {
     let mut end = use_signal(|| false);
-    let skip = use_memo(move || TEXTCONFIG().is_skip);
+    let ffward = use_memo(move || TEXTCONFIG().is_ffward);
     let auto = use_memo(move || TEXTCONFIG().is_auto);
     let close = use_memo(move || TEXTCONFIG().is_close);
     let log = use_memo(move || TEXTCONFIG().is_log);
@@ -582,6 +582,8 @@ fn StoryBox(
     let text_print = use_memo(use_reactive((&story,), |(story,)| story));
     let story_index = use_memo(use_reactive((&story_index,), |(story_index,)| story_index));
     let mut msg_index = use_signal(|| 0_usize);
+    let mut ffward_hold = use_signal(|| false);
+    let mut ffward_hold_time = use_signal(|| 0_u32);
     let message_len = use_memo(move || {
         if let Some(msg) = text_print().get(text_index()) {
             msg.msg.chars().count()
@@ -611,7 +613,7 @@ fn StoryBox(
     });
     let title: Vec<Element> = title.iter().map(|t| t.print()).collect();
     let auto_clicked = if auto() { "is_clicked" } else { "" };
-    let skip_clicked = if skip() { "is_clicked" } else { "" };
+    let skip_clicked = if ffward() { "is_clicked" } else { "" };
 
     use_future(move || async move {
         loop {
@@ -619,12 +621,23 @@ fn StoryBox(
                 wait(5).await;
             } else if let Some(msg) = text_print().get(text_index()) {
                 *end.write() = false;
-                if skip() && can_skip && skip_len > story_index() {
+                if ffward_hold() {
                     wait(5).await;
-                } else if skip() {
-                    TEXTCONFIG.write().is_skip = false;
-                    wait((msg.speed as f32 / TEXTCONFIG().speed) as u32).await;
-                } else {
+                    *ffward_hold_time.write() += 5;
+                    if ffward_hold_time() > 1000 {
+                        TEXTCONFIG.write().is_ffward = true;
+                    }
+                }
+                if ffward() && can_skip
+                // && skip_len > story_index()
+                {
+                    wait(5).await;
+                }
+                // else if skip() {
+                //     TEXTCONFIG.write().is_ffward = false;
+                //     wait((msg.speed as f32 / TEXTCONFIG().speed) as u32).await;
+                // }
+                else {
                     wait((msg.speed as f32 / TEXTCONFIG().speed) as u32).await;
                 }
                 if !log() {
@@ -643,13 +656,15 @@ fn StoryBox(
             } else {
                 wait(10).await;
                 *end.write() = true;
-                if skip() && can_skip && skip_len > story_index() {
+                if ffward() && can_skip
+                // && skip_len > story_index()
+                {
                     LOG.write().push(text_print().clone());
                     on_next.call(DummyData {});
                     *text_index.write() = 0;
                     *msg_index.write() = 0;
-                } else if skip() {
-                    TEXTCONFIG.write().is_skip = false;
+                } else if ffward() {
+                    TEXTCONFIG.write().is_ffward = false;
                 } else if auto() {
                     let mut count = 0;
                     while count < TEXTCONFIG.read().auto_speed && end() && TEXTCONFIG.read().is_auto
@@ -668,18 +683,17 @@ fn StoryBox(
         }
     });
     let keydown = move |e: KeyboardEvent| {
-        if (e.code() == Code::ControlLeft || e.code() == Code::ControlRight)
-            && can_skip
-            && skip_len > story_index()
+        if (e.code() == Code::ControlLeft || e.code() == Code::ControlRight) && can_skip
+        // && skip_len > story_index()
         {
-            TEXTCONFIG.write().is_skip = true;
+            TEXTCONFIG.write().is_ffward = true;
         } else {
-            TEXTCONFIG.write().is_skip = false;
+            TEXTCONFIG.write().is_ffward = false;
         }
     };
     let keyup = move |e: KeyboardEvent| {
         if (e.code() == Code::ControlLeft || e.code() == Code::ControlRight) && can_skip {
-            TEXTCONFIG.write().is_skip = false;
+            TEXTCONFIG.write().is_ffward = false;
         }
     };
     let click = move |_: MouseEvent| {
@@ -692,6 +706,17 @@ fn StoryBox(
         } else if can_skip {
             *text_index.write() = text_print().len();
         }
+    };
+    let mousedouwn = move |_: MouseEvent| {
+        *ffward_hold.write() = true;
+    };
+    let mouseup = move |_: MouseEvent| {
+        *ffward_hold.write() = false;
+        *ffward_hold_time.write() = 0;
+    };
+    let mouseout = move |_: MouseEvent| {
+        *ffward_hold.write() = false;
+        *ffward_hold_time.write() = 0;
     };
     rsx! {
         if TEXTCONFIG().is_setting{
@@ -722,6 +747,9 @@ fn StoryBox(
                 onkeydown: keydown,
                 onkeyup: keyup,
                 onclick: click,
+                onmousedown: mousedouwn,
+                onmouseup: mouseup,
+                onmouseout: mouseout,
                 tabindex: 1,
                 autofocus: true,
                 article{
@@ -763,8 +791,11 @@ fn StoryBox(
                         span{
                             class:"{skip_clicked} msg-skip-span",
                             onclick: move |e|{
-                                let skip = !TEXTCONFIG.read().is_skip;
-                                TEXTCONFIG.write().is_skip = skip;
+                                // let skip = !TEXTCONFIG.read().is_ffward;
+                                // TEXTCONFIG.write().is_ffward = skip;
+                                if skip_len > story_index(){
+                                    on_next.call(DummyData{});
+                                }
                                 e.stop_propagation();
                             },
                             "skip"
