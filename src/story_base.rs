@@ -2,6 +2,7 @@ use std::fmt::Debug;
 
 use crate::text_print::*;
 use dioxus::prelude::*;
+use tracing::info;
 // use tracing::info;
 // use web_sys::{AudioContext, AudioContextState};
 
@@ -597,6 +598,8 @@ fn StoryBox(
         box_style
     };
 
+    let mut is_skip = use_signal(|| false);
+
     let before_message = use_memo(move || {
         text_print()
             .iter()
@@ -621,6 +624,12 @@ fn StoryBox(
                 wait(5).await;
             } else if let Some(msg) = text_print().get(text_index()) {
                 *end.write() = false;
+                if is_skip() {
+                    while skip_len > story_index() {
+                        wait(1).await;
+                        on_next.call(DummyData {});
+                    }
+                }
                 if ffward_hold() {
                     wait(5).await;
                     *ffward_hold_time.write() += 5;
@@ -654,8 +663,23 @@ fn StoryBox(
                     }
                 }
             } else {
-                wait(10).await;
                 *end.write() = true;
+                if is_skip() {
+                    while skip_len > story_index() {
+                        wait(1).await;
+                        on_next.call(DummyData {});
+                    }
+                    *is_skip.write() = false;
+                }
+                if ffward_hold() {
+                    wait(5).await;
+                    *ffward_hold_time.write() += 5;
+                    if ffward_hold_time() > 1000 {
+                        TEXTCONFIG.write().is_ffward = true;
+                    }
+                } else {
+                    wait(10).await;
+                }
                 if ffward() && can_skip
                 // && skip_len > story_index()
                 {
@@ -708,14 +732,19 @@ fn StoryBox(
         }
     };
     let mousedouwn = move |_: MouseEvent| {
+        info!("빨리감기 시도중");
         *ffward_hold.write() = true;
     };
     let mouseup = move |_: MouseEvent| {
+        info!("빨리감기 정지 마우스 업");
         *ffward_hold.write() = false;
+        TEXTCONFIG.write().is_ffward = false;
         *ffward_hold_time.write() = 0;
     };
-    let mouseout = move |_: MouseEvent| {
+    let mouseleave = move |_: MouseEvent| {
+        info!("빨리감기 정지 마우스 아웃");
         *ffward_hold.write() = false;
+        TEXTCONFIG.write().is_ffward = false;
         *ffward_hold_time.write() = 0;
     };
     rsx! {
@@ -749,7 +778,7 @@ fn StoryBox(
                 onclick: click,
                 onmousedown: mousedouwn,
                 onmouseup: mouseup,
-                onmouseout: mouseout,
+                onmouseleave: mouseleave,
                 tabindex: 1,
                 autofocus: true,
                 article{
@@ -793,9 +822,8 @@ fn StoryBox(
                             onclick: move |e|{
                                 // let skip = !TEXTCONFIG.read().is_ffward;
                                 // TEXTCONFIG.write().is_ffward = skip;
-                                if skip_len > story_index(){
-                                    on_next.call(DummyData{});
-                                }
+                                info!("스킵 시도");
+                                *is_skip.write() = true;
                                 e.stop_propagation();
                             },
                             "skip"
